@@ -1,0 +1,15 @@
+[package]
+name = "fastr"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "fastr"
+path = "src/lib.rs"
+
+[dependencies]
+faer = "0.21.9"
+itertools = "0.14.0"
+kiddo = "5.0.3"
+thiserror = "2.0.12"
+vtkio = "0.6.3"

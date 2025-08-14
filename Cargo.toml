@@ -8,8 +8,9 @@ name = "fastr"
 path = "src/lib.rs"
 
 [dependencies]
-faer = "0.21.9"
+faer = "0.22.6"
 itertools = "0.14.0"
 kiddo = "5.0.3"
+ndarray = "0.16.1"
 thiserror = "2.0.12"
 vtkio = "0.6.3"

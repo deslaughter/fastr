@@ -1,41 +1,349 @@
-use ndarray::prelude::*;
+use crate::nwtc::{matrix::Matrix3, vector::Vector3};
 
-#[inline]
-pub fn quat_magnitude(q: ArrayView1<f64>) -> f64 {
-    (q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]).sqrt()
+/// Quaternion operations for 3D rotations.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Quaternion {
+    pub w: f64,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
-#[inline]
-pub fn quat_compose(q1: ArrayView1<f64>, q2: ArrayView1<f64>, mut q_out: ArrayViewMut1<f64>) {
-    q_out[0] = q1[0] * q2[0] - q1[1] * q2[1] - q1[2] * q2[2] - q1[3] * q2[3];
-    q_out[1] = q1[0] * q2[1] + q1[1] * q2[0] + q1[2] * q2[3] - q1[3] * q2[2];
-    q_out[2] = q1[0] * q2[2] - q1[1] * q2[3] + q1[2] * q2[0] + q1[3] * q2[1];
-    q_out[3] = q1[0] * q2[3] + q1[1] * q2[2] - q1[2] * q2[1] + q1[3] * q2[0];
-    quat_normalize(q_out);
-}
+impl Quaternion {
+    pub fn new(w: f64, x: f64, y: f64, z: f64) -> Self {
+        Self { w, x, y, z }
+    }
 
-#[inline]
-pub fn quat_normalize(mut q: ArrayViewMut1<f64>) {
-    let m = q.pow2().sum().sqrt();
-    if m < f64::EPSILON {
-        q.fill(0.0);
-        q[0] = 1.0;
-    } else if q[0] < 0.0 {
-        q /= -m;
-    } else {
-        q /= m;
+    #[inline]
+    pub fn identity() -> Self {
+        Self {
+            w: 1.0,
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
+
+    #[inline]
+    pub fn from_array(arr: [f64; 4]) -> Self {
+        Self {
+            w: arr[0],
+            x: arr[1],
+            y: arr[2],
+            z: arr[3],
+        }
+    }
+
+    #[inline]
+    pub fn as_array(&self) -> [f64; 4] {
+        [self.w, self.x, self.y, self.z]
+    }
+
+    #[inline]
+    pub fn norm(&self) -> f64 {
+        (self.w * self.w + self.x * self.x + self.y * self.y + self.z * self.z).sqrt()
+    }
+
+    #[inline]
+    pub fn normalize(&self) -> Self {
+        let norm = self.norm();
+        if norm < f64::EPSILON {
+            Self::identity()
+        } else {
+            Self {
+                w: self.w / norm,
+                x: self.x / norm,
+                y: self.y / norm,
+                z: self.z / norm,
+            }
+        }
+    }
+
+    pub fn inverse(&self) -> Self {
+        Self {
+            w: self.w,
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
+    }
+
+    pub fn compose(&self, other: &Self) -> Self {
+        Self {
+            w: self.w * other.w - self.x * other.x - self.y * other.y - self.z * other.z,
+            x: self.w * other.x + self.x * other.w + self.y * other.z - self.z * other.y,
+            y: self.w * other.y - self.x * other.z + self.y * other.w + self.z * other.x,
+            z: self.w * other.z + self.x * other.y - self.y * other.x + self.z * other.w,
+        }
+    }
+
+    pub fn rotate_vector(&self, v: &Vector3) -> Vector3 {
+        let v_as_quat = Quaternion::new(0.0, v.x, v.y, v.z);
+        let rotated = self.compose(&v_as_quat).compose(&self.inverse());
+        Vector3::new(rotated.x, rotated.y, rotated.z)
+    }
+
+    pub fn from_vector(rv: &Vector3) -> Self {
+        let theta = (rv.x * rv.x + rv.y * rv.y + rv.z * rv.z).sqrt();
+        if theta < f64::EPSILON {
+            Self::identity()
+        } else {
+            let half_theta = theta / 2.0;
+            let (sin_half_theta, cos_half_theta) = half_theta.sin_cos();
+            Self {
+                w: cos_half_theta,
+                x: rv.x * sin_half_theta / theta,
+                y: rv.y * sin_half_theta / theta,
+                z: rv.z * sin_half_theta / theta,
+            }
+        }
+    }
+
+    pub fn as_vector(&self) -> Vector3 {
+        let qw = self.w.clamp(-1.0, 1.0);
+        let theta = 2.0 * qw.acos();
+        let sin_half_theta = (1.0 - qw * qw).sqrt();
+
+        if sin_half_theta.abs() < f64::EPSILON {
+            Vector3::zero()
+        } else {
+            Vector3::new(
+                self.x * theta / sin_half_theta,
+                self.y * theta / sin_half_theta,
+                self.z * theta / sin_half_theta,
+            )
+        }
+    }
+
+    pub fn from_matrix(m: &Matrix3) -> Self {
+        let m = &m.data;
+        let trace = m[0][0] + m[1][1] + m[2][2];
+        if trace > 0.0 {
+            let s = (trace + 1.0).sqrt() * 2.0;
+            Self {
+                w: 0.25 * s,
+                x: (m[2][1] - m[1][2]) / s,
+                y: (m[0][2] - m[2][0]) / s,
+                z: (m[1][0] - m[0][1]) / s,
+            }
+        } else if (m[0][0] > m[1][1]) && (m[0][0] > m[2][2]) {
+            let s = (1.0 + m[0][0] - m[1][1] - m[2][2]).sqrt() * 2.0;
+            Self {
+                w: (m[2][1] - m[1][2]) / s,
+                x: 0.25 * s,
+                y: (m[0][1] + m[1][0]) / s,
+                z: (m[0][2] + m[2][0]) / s,
+            }
+        } else if m[1][1] > m[2][2] {
+            let s = (1.0 + m[1][1] - m[0][0] - m[2][2]).sqrt() * 2.0;
+            Self {
+                w: (m[0][2] - m[2][0]) / s,
+                x: (m[0][1] + m[1][0]) / s,
+                y: 0.25 * s,
+                z: (m[1][2] + m[2][1]) / s,
+            }
+        } else {
+            let s = (1.0 + m[2][2] - m[0][0] - m[1][1]).sqrt() * 2.0;
+            Self {
+                w: (m[1][0] - m[0][1]) / s,
+                x: (m[0][2] + m[2][0]) / s,
+                y: (m[1][2] + m[2][1]) / s,
+                z: 0.25 * s,
+            }
+        }
+    }
+
+    pub fn as_matrix(&self) -> Matrix3 {
+        Matrix3 {
+            data: [
+                [
+                    1.0 - 2.0 * (self.y * self.y + self.z * self.z),
+                    2.0 * (self.x * self.y - self.z * self.w),
+                    2.0 * (self.x * self.z + self.y * self.w),
+                ],
+                [
+                    2.0 * (self.x * self.y + self.z * self.w),
+                    1.0 - 2.0 * (self.x * self.x + self.z * self.z),
+                    2.0 * (self.y * self.z - self.x * self.w),
+                ],
+                [
+                    2.0 * (self.x * self.z - self.y * self.w),
+                    2.0 * (self.y * self.z + self.x * self.w),
+                    1.0 - 2.0 * (self.x * self.x + self.y * self.y),
+                ],
+            ],
+        }
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    const EPSILON: f64 = 1e-10;
+    use std::f64::consts::PI;
 
-#[inline]
-pub fn quat_from_rvec(rvec: ArrayView1<f64>) -> Array1<f64> {
-    let theta = rvec.powi(2).sum().sqrt();
-    let half_theta = theta / 2.0;
-    let sin_half_theta = half_theta.sin();
-    let mut q = Array1::zeros(4);
-    q[0] = half_theta.cos();
-    q[1] = rvec[0] * sin_half_theta / theta;
-    q[2] = rvec[1] * sin_half_theta / theta;
-    q[3] = rvec[2] * sin_half_theta / theta;
-    q
+    fn assert_quaternion_eq(q1: &Quaternion, q2: &Quaternion) {
+        assert!((q1.w - q2.w).abs() < EPSILON);
+        assert!((q1.x - q2.x).abs() < EPSILON);
+        assert!((q1.y - q2.y).abs() < EPSILON);
+        assert!((q1.z - q2.z).abs() < EPSILON);
+    }
+
+    fn assert_vector3_eq(v1: &Vector3, v2: &Vector3) {
+        assert!((v1.x - v2.x).abs() < EPSILON);
+        assert!((v1.y - v2.y).abs() < EPSILON);
+        assert!((v1.z - v2.z).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_identity() {
+        let q = Quaternion::identity();
+        assert_eq!(q.w, 1.0);
+        assert_eq!(q.x, 0.0);
+        assert_eq!(q.y, 0.0);
+        assert_eq!(q.z, 0.0);
+    }
+
+    #[test]
+    fn test_from_array() {
+        let arr = [1.0, 2.0, 3.0, 4.0];
+        let q = Quaternion::from_array(arr);
+        assert_eq!(q.w, 1.0);
+        assert_eq!(q.x, 2.0);
+        assert_eq!(q.y, 3.0);
+        assert_eq!(q.z, 4.0);
+    }
+
+    #[test]
+    fn test_as_array() {
+        let q = Quaternion::new(1.0, 2.0, 3.0, 4.0);
+        let arr = q.as_array();
+        assert_eq!(arr, [1.0, 2.0, 3.0, 4.0]);
+    }
+
+    #[test]
+    fn test_norm() {
+        let q = Quaternion::new(1.0, 2.0, 3.0, 4.0);
+        assert!((q.norm() - 5.477225575051661).abs() < EPSILON);
+    }
+
+    #[test]
+    fn test_normalize() {
+        let q = Quaternion::new(1.0, 2.0, 3.0, 4.0);
+        let normalized = q.normalize();
+        assert!((normalized.norm() - 1.0).abs() < EPSILON);
+
+        // Test normalization of near-zero quaternion
+        let q_small = Quaternion::new(0.0, 1e-16, 1e-16, 1e-16);
+        let normalized_small = q_small.normalize();
+        assert_quaternion_eq(&normalized_small, &Quaternion::identity());
+    }
+
+    #[test]
+    fn test_inverse() {
+        let q = Quaternion::new(1.0, 2.0, 3.0, 4.0);
+        let inv = q.inverse();
+        assert_eq!(inv.w, 1.0);
+        assert_eq!(inv.x, -2.0);
+        assert_eq!(inv.y, -3.0);
+        assert_eq!(inv.z, -4.0);
+    }
+
+    #[test]
+    fn test_compose() {
+        let q1 = Quaternion::new(1.0, 2.0, 3.0, 4.0).normalize();
+        let q2 = Quaternion::new(2.0, 3.0, 4.0, 5.0).normalize();
+        let result = q1.compose(&q2);
+
+        // Verify composition is correct
+        let expected = Quaternion::new(
+            q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z,
+            q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y,
+            q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x,
+            q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w,
+        );
+        assert_quaternion_eq(&result, &expected);
+    }
+
+    #[test]
+    fn test_rotate_vector() {
+        // Test 90-degree rotation around Z-axis
+        let q = Quaternion::new(0.7071067811865476, 0.0, 0.0, 0.7071067811865475); // cos(pi/4), 0, 0, sin(pi/4)
+        let v = Vector3::new(1.0, 0.0, 0.0);
+        let rotated = q.rotate_vector(&v);
+        assert_vector3_eq(&rotated, &Vector3::new(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    fn test_from_rotation_vector() {
+        // Test rotation around X axis by 90 degrees
+        let rv = Vector3::new(PI / 2.0, 0.0, 0.0);
+        let q = Quaternion::from_vector(&rv);
+        assert!((q.w - 0.7071067811865476).abs() < EPSILON);
+        assert!((q.x - 0.7071067811865475).abs() < EPSILON);
+        assert!((q.y - 0.0).abs() < EPSILON);
+        assert!((q.z - 0.0).abs() < EPSILON);
+
+        // Test zero rotation
+        let zero_rv = Vector3::zero();
+        let zero_q = Quaternion::from_vector(&zero_rv);
+        assert_quaternion_eq(&zero_q, &Quaternion::identity());
+    }
+
+    #[test]
+    fn test_as_rotation_vector() {
+        // Create a quaternion representing rotation around Y-axis
+        let q = Quaternion::new(0.7071067811865476, 0.0, 0.7071067811865475, 0.0); // cos(pi/4), 0, sin(pi/4), 0
+        let rv = q.as_vector();
+        assert_vector3_eq(&rv, &Vector3::new(0.0, PI / 2.0, 0.0));
+
+        // Test identity
+        let identity_rv = Quaternion::identity().as_vector();
+        assert_vector3_eq(&identity_rv, &Vector3::zero());
+    }
+
+    #[test]
+    fn test_from_rotation_matrix() {
+        // Create a rotation matrix for 90 degrees around Z axis
+        let matrix = Matrix3::new([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]);
+        let q = Quaternion::from_matrix(&matrix);
+        let expected = Quaternion::new(0.7071067811865476, 0.0, 0.0, 0.7071067811865475);
+        assert_quaternion_eq(&q, &expected);
+    }
+
+    #[test]
+    fn test_as_rotation_matrix() {
+        // 90 degrees around X axis
+        let q = Quaternion::new(0.7071067811865476, 0.7071067811865475, 0.0, 0.0);
+        let matrix = q.as_matrix();
+        let expected = Matrix3::new([[1.0, 0.0, 0.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0]]);
+
+        for i in 0..3 {
+            for j in 0..3 {
+                assert!((matrix.get(i, j) - expected.get(i, j)).abs() < EPSILON);
+            }
+        }
+    }
+
+    #[test]
+    fn test_roundtrip_rotation_vector() {
+        let original_rv = Vector3::new(0.1, 0.2, 0.3);
+        let q = Quaternion::from_vector(&original_rv);
+        let recovered_rv = q.as_vector();
+        assert_vector3_eq(&original_rv, &recovered_rv);
+    }
+
+    #[test]
+    fn test_roundtrip_rotation_matrix() {
+        let original_matrix =
+            Matrix3::new([[0.36, 0.48, -0.8], [-0.8, 0.6, 0.0], [0.48, 0.64, 0.6]]);
+        let q = Quaternion::from_matrix(&original_matrix);
+        let recovered_matrix = q.as_matrix();
+
+        let diff = original_matrix - recovered_matrix;
+        for i in 0..3 {
+            for j in 0..3 {
+                assert!(diff.get(i, j).abs() < EPSILON);
+            }
+        }
+    }
 }

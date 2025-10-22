@@ -37,8 +37,8 @@ impl Node {
         self
     }
 
-    pub fn rotate(&mut self, dq: &Quaternion) {
-        self.ur = dq.compose(&self.ur);
+    pub fn rotate(&mut self, dq: Quaternion) {
+        self.ur = dq * self.ur;
     }
 
     pub fn x(&self) -> Vector3 {
@@ -46,7 +46,7 @@ impl Node {
     }
 
     pub fn r(&self) -> Quaternion {
-        self.ur.compose(&self.r0)
+        self.ur * self.r0
     }
 
     pub fn set_x(&mut self, x: Vector3) -> &mut Node {
@@ -55,7 +55,7 @@ impl Node {
     }
 
     pub fn set_r(&mut self, q: Quaternion) -> &mut Node {
-        self.ur = self.r0.inverse().compose(&q);
+        self.ur = self.r0.inverse() * q;
         self
     }
 

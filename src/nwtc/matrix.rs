@@ -102,3 +102,31 @@ impl std::ops::Neg for Matrix3 {
         }
     }
 }
+
+impl std::ops::Mul<Matrix3> for Matrix3 {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        let mut result = Matrix3::new([[0.0; 3]; 3]);
+        for i in 0..3 {
+            for j in 0..3 {
+                result.data[i][j] = self.data[i][0] * other.data[0][j]
+                    + self.data[i][1] * other.data[1][j]
+                    + self.data[i][2] * other.data[2][j];
+            }
+        }
+        result
+    }
+}
+
+impl std::ops::Mul<Vector3> for Matrix3 {
+    type Output = Vector3;
+
+    fn mul(self, vec: Vector3) -> Vector3 {
+        Vector3 {
+            x: self.data[0][0] * vec.x + self.data[0][1] * vec.y + self.data[0][2] * vec.z,
+            y: self.data[1][0] * vec.x + self.data[1][1] * vec.y + self.data[1][2] * vec.z,
+            z: self.data[2][0] * vec.x + self.data[2][1] * vec.y + self.data[2][2] * vec.z,
+        }
+    }
+}

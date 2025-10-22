@@ -1,5 +1,8 @@
 use crate::nwtc::{matrix::Matrix3, vector::Vector3};
 
+// https://academicflight.com/articles/kinematics/rotation-formalisms/rotation-matrix/
+// Quaternions represent a rotation from body-fixed frame to inertial frame
+
 /// Quaternion operations for 3D rotations.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Quaternion {
@@ -79,11 +82,11 @@ impl Quaternion {
 
     pub fn rotate_vector(&self, v: &Vector3) -> Vector3 {
         let v_as_quat = Quaternion::new(0.0, v.x, v.y, v.z);
-        let rotated = self.compose(&v_as_quat).compose(&self.inverse());
+        let rotated = (*self * v_as_quat) * self.inverse();
         Vector3::new(rotated.x, rotated.y, rotated.z)
     }
 
-    pub fn from_vector(rv: &Vector3) -> Self {
+    pub fn from_vector(rv: Vector3) -> Self {
         let theta = (rv.x * rv.x + rv.y * rv.y + rv.z * rv.z).sqrt();
         if theta < f64::EPSILON {
             Self::identity()
@@ -99,7 +102,7 @@ impl Quaternion {
         }
     }
 
-    pub fn as_vector(&self) -> Vector3 {
+    pub fn as_vector(self) -> Vector3 {
         let qw = self.w.clamp(-1.0, 1.0);
         let theta = 2.0 * qw.acos();
         let sin_half_theta = (1.0 - qw * qw).sqrt();
@@ -175,6 +178,15 @@ impl Quaternion {
         }
     }
 }
+
+impl std::ops::Mul for Quaternion {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        self.compose(&other)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use approx::assert_relative_eq;
@@ -183,17 +195,17 @@ mod tests {
     const EPSILON: f64 = 1e-12;
     use std::f64::consts::PI;
 
-    fn assert_quaternion_eq(q1: &Quaternion, q2: &Quaternion) {
-        assert_relative_eq!(q1.w, q2.w, epsilon = EPSILON);
-        assert_relative_eq!(q1.x, q2.x, epsilon = EPSILON);
-        assert_relative_eq!(q1.y, q2.y, epsilon = EPSILON);
-        assert_relative_eq!(q1.z, q2.z, epsilon = EPSILON);
+    fn assert_quaternion_eq(act: Quaternion, exp: Quaternion) {
+        assert_relative_eq!(act.w, exp.w, epsilon = EPSILON);
+        assert_relative_eq!(act.x, exp.x, epsilon = EPSILON);
+        assert_relative_eq!(act.y, exp.y, epsilon = EPSILON);
+        assert_relative_eq!(act.z, exp.z, epsilon = EPSILON);
     }
 
-    fn assert_vector3_eq(v1: &Vector3, v2: &Vector3) {
-        assert_relative_eq!(v1.x, v2.x, epsilon = EPSILON);
-        assert_relative_eq!(v1.y, v2.y, epsilon = EPSILON);
-        assert_relative_eq!(v1.z, v2.z, epsilon = EPSILON);
+    fn assert_vector3_eq(act: Vector3, exp: Vector3) {
+        assert_relative_eq!(act.x, exp.x, epsilon = EPSILON);
+        assert_relative_eq!(act.y, exp.y, epsilon = EPSILON);
+        assert_relative_eq!(act.z, exp.z, epsilon = EPSILON);
     }
 
     #[test]
@@ -237,7 +249,7 @@ mod tests {
         // Test normalization of near-zero quaternion
         let q_small = Quaternion::new(0.0, 1e-16, 1e-16, 1e-16);
         let normalized_small = q_small.normalize();
-        assert_quaternion_eq(&normalized_small, &Quaternion::identity());
+        assert_quaternion_eq(normalized_small, Quaternion::identity());
     }
 
     #[test]
@@ -252,27 +264,27 @@ mod tests {
 
     #[test]
     fn test_compose() {
-        let q_base = Quaternion::from_vector(&Vector3::new(PI / 6., PI / 3., 0.)); // base
-        let q_delta = Quaternion::from_vector(&Vector3::new(PI / 4., 0., 0.)); // delta
-        let result = q_delta.compose(&q_base).as_vector();
-        let expected = Vector3::new(PI / 6. + PI / 4., PI / 3., 0.);
-        assert_vector3_eq(&result, &expected);
+        let q_base = Quaternion::from_vector(Vector3::new(PI / 6., PI / 3., 0.)); // base
+        let q_delta = Quaternion::from_vector(Vector3::new(PI / 4., 0., 0.)); // delta
+        let result = (q_delta * q_base).as_vector();
+        let expected = Vector3::new(1.2307715233860903, 1.0268512702231527, 0.4253357226664698);
+        assert_vector3_eq(result, expected);
     }
 
     #[test]
     fn test_rotate_vector() {
         // Test 90-degree rotation around Z-axis
-        let q = Quaternion::from_vector(&Vector3::new(0., 0., PI / 2.));
+        let q = Quaternion::from_vector(Vector3::new(0., 0., PI / 2.));
         let v = Vector3::new(1.0, 0.0, 0.0);
         let rotated = q.rotate_vector(&v);
-        assert_vector3_eq(&rotated, &Vector3::new(0.0, 1.0, 0.0));
+        assert_vector3_eq(rotated, Vector3::new(0.0, 1.0, 0.0));
     }
 
     #[test]
     fn test_from_rotation_vector() {
         // Test rotation around X axis by 90 degrees
         let rv = Vector3::new(PI / 2.0, 0.0, 0.0);
-        let q = Quaternion::from_vector(&rv);
+        let q = Quaternion::from_vector(rv);
         assert!((q.w - 0.7071067811865476).abs() < EPSILON);
         assert!((q.x - 0.7071067811865475).abs() < EPSILON);
         assert!((q.y - 0.0).abs() < EPSILON);
@@ -280,8 +292,8 @@ mod tests {
 
         // Test zero rotation
         let zero_rv = Vector3::zero();
-        let zero_q = Quaternion::from_vector(&zero_rv);
-        assert_quaternion_eq(&zero_q, &Quaternion::identity());
+        let zero_q = Quaternion::from_vector(zero_rv);
+        assert_quaternion_eq(zero_q, Quaternion::identity());
     }
 
     #[test]
@@ -289,11 +301,11 @@ mod tests {
         // Create a quaternion representing rotation around Y-axis
         let q = Quaternion::new(0.7071067811865476, 0.0, 0.7071067811865475, 0.0); // cos(pi/4), 0, sin(pi/4), 0
         let rv = q.as_vector();
-        assert_vector3_eq(&rv, &Vector3::new(0.0, PI / 2.0, 0.0));
+        assert_vector3_eq(rv, Vector3::new(0.0, PI / 2.0, 0.0));
 
         // Test identity
         let identity_rv = Quaternion::identity().as_vector();
-        assert_vector3_eq(&identity_rv, &Vector3::zero());
+        assert_vector3_eq(identity_rv, Vector3::zero());
     }
 
     #[test]
@@ -302,7 +314,7 @@ mod tests {
         let matrix = Matrix3::new([[0.0, -1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 1.0]]);
         let q = Quaternion::from_matrix(&matrix);
         let expected = Quaternion::new(0.7071067811865476, 0.0, 0.0, 0.7071067811865475);
-        assert_quaternion_eq(&q, &expected);
+        assert_quaternion_eq(q, expected);
     }
 
     #[test]
@@ -322,9 +334,9 @@ mod tests {
     #[test]
     fn test_roundtrip_rotation_vector() {
         let original_rv = Vector3::new(0.1, 0.2, 0.3);
-        let q = Quaternion::from_vector(&original_rv);
+        let q = Quaternion::from_vector(original_rv);
         let recovered_rv = q.as_vector();
-        assert_vector3_eq(&original_rv, &recovered_rv);
+        assert_vector3_eq(original_rv, recovered_rv);
     }
 
     #[test]

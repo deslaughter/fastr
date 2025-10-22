@@ -71,14 +71,13 @@ impl<'a> NodeBuilder<'a> {
         self
     }
 
-    pub fn rotate(self, dr: Vector3) -> Self {
-        let dq = Quaternion::from_vector(&dr);
-        self.node.r0 = Quaternion::compose(&self.node.r0, &dq);
+    pub fn rotate(self, q: Quaternion) -> Self {
+        self.node.r0 = q * self.node.r0;
         self
     }
 
     pub fn rotate_about_point(self, q: Quaternion, point: Vector3) -> Self {
-        self.node.r0 = Quaternion::compose(&self.node.r0, &q);
+        self.node.r0 = q * self.node.r0;
         let rotated_x0 = q.rotate_vector(&(self.node.x0 - point));
         self.node.x0 = rotated_x0 + point;
         self

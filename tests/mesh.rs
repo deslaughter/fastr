@@ -22,7 +22,7 @@ fn orbiting_mesh() {
     let mut mb = MeshBuilder::new();
     let moon_node = mb
         .add_node()
-        .set_position(0., 0., 0.)
+        .set_position(1., 0., 0.)
         .set_orientation(Quaternion::identity())
         .build();
     mb.add_point_element(moon_node);
@@ -62,8 +62,8 @@ fn orbiting_mesh() {
         // Update earth position and orientation
         let dx = earth.nodes[0].vx * dt;
         earth.nodes[0].translate(dx);
-        let dr = Quaternion::from_vector(&(earth.nodes[0].vr * dt));
-        earth.nodes[0].rotate(&dr);
+        let dr = Quaternion::from_vector(earth.nodes[0].vr * dt);
+        earth.nodes[0].rotate(dr);
 
         // Map motion to moon
         orbit.map_motion(&earth, &mut moon);
@@ -95,7 +95,7 @@ fn mesh_linearization() {
     // Displace source node
     src.nodes[0]
         .translate(Vector3::new(0., 0.5, 0.))
-        .rotate(&Quaternion::from_vector(&Vector3::new(0., 0., PI / 6.)));
+        .rotate(Quaternion::from_vector(Vector3::new(0., 0., PI / 6.)));
 
     // Create a copy of the source mesh for reference
     let src_ref = src.clone();
@@ -147,7 +147,7 @@ fn mesh_linearization() {
         &(0..3)
             .map(|i| {
                 // Apply perturbation as a quaternion
-                let q = Quaternion::from_vector(&match i {
+                let q = Quaternion::from_vector(match i {
                     0 => Vector3::new(perturb, 0., 0.),
                     1 => Vector3::new(0., perturb, 0.),
                     2 => Vector3::new(0., 0., perturb),
@@ -155,12 +155,12 @@ fn mesh_linearization() {
                 });
 
                 src.copy_motion_from(&src_ref);
-                src.nodes[0].rotate(&q);
+                src.nodes[0].rotate(q);
                 mapping.map_motion(&src, &mut dst);
                 let ux_p = dst.nodes[0].ux;
 
                 src.copy_motion_from(&src_ref);
-                src.nodes[0].rotate(&q.inverse());
+                src.nodes[0].rotate(q.inverse());
                 mapping.map_motion(&src, &mut dst);
                 let ux_m = dst.nodes[0].ux;
 

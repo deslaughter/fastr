@@ -139,3 +139,15 @@ impl Neg for Vector3 {
         }
     }
 }
+
+impl std::ops::Mul<Matrix3> for Vector3 {
+    type Output = Self;
+
+    fn mul(self, mat: Matrix3) -> Self {
+        Self {
+            x: self.x * mat.data[0][0] + self.y * mat.data[1][0] + self.z * mat.data[2][0],
+            y: self.x * mat.data[0][1] + self.y * mat.data[1][1] + self.z * mat.data[2][1],
+            z: self.x * mat.data[0][2] + self.y * mat.data[1][2] + self.z * mat.data[2][2],
+        }
+    }
+}

@@ -177,21 +177,23 @@ impl Quaternion {
 }
 #[cfg(test)]
 mod tests {
+    use approx::assert_relative_eq;
+
     use super::*;
-    const EPSILON: f64 = 1e-10;
+    const EPSILON: f64 = 1e-12;
     use std::f64::consts::PI;
 
     fn assert_quaternion_eq(q1: &Quaternion, q2: &Quaternion) {
-        assert!((q1.w - q2.w).abs() < EPSILON);
-        assert!((q1.x - q2.x).abs() < EPSILON);
-        assert!((q1.y - q2.y).abs() < EPSILON);
-        assert!((q1.z - q2.z).abs() < EPSILON);
+        assert_relative_eq!(q1.w, q2.w, epsilon = EPSILON);
+        assert_relative_eq!(q1.x, q2.x, epsilon = EPSILON);
+        assert_relative_eq!(q1.y, q2.y, epsilon = EPSILON);
+        assert_relative_eq!(q1.z, q2.z, epsilon = EPSILON);
     }
 
     fn assert_vector3_eq(v1: &Vector3, v2: &Vector3) {
-        assert!((v1.x - v2.x).abs() < EPSILON);
-        assert!((v1.y - v2.y).abs() < EPSILON);
-        assert!((v1.z - v2.z).abs() < EPSILON);
+        assert_relative_eq!(v1.x, v2.x, epsilon = EPSILON);
+        assert_relative_eq!(v1.y, v2.y, epsilon = EPSILON);
+        assert_relative_eq!(v1.z, v2.z, epsilon = EPSILON);
     }
 
     #[test]
@@ -250,24 +252,17 @@ mod tests {
 
     #[test]
     fn test_compose() {
-        let q1 = Quaternion::new(1.0, 2.0, 3.0, 4.0).normalize();
-        let q2 = Quaternion::new(2.0, 3.0, 4.0, 5.0).normalize();
-        let result = q1.compose(&q2);
-
-        // Verify composition is correct
-        let expected = Quaternion::new(
-            q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z,
-            q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y,
-            q1.w * q2.y - q1.x * q2.z + q1.y * q2.w + q1.z * q2.x,
-            q1.w * q2.z + q1.x * q2.y - q1.y * q2.x + q1.z * q2.w,
-        );
-        assert_quaternion_eq(&result, &expected);
+        let q_base = Quaternion::from_vector(&Vector3::new(PI / 6., PI / 3., 0.)); // base
+        let q_delta = Quaternion::from_vector(&Vector3::new(PI / 4., 0., 0.)); // delta
+        let result = q_delta.compose(&q_base).as_vector();
+        let expected = Vector3::new(PI / 6. + PI / 4., PI / 3., 0.);
+        assert_vector3_eq(&result, &expected);
     }
 
     #[test]
     fn test_rotate_vector() {
         // Test 90-degree rotation around Z-axis
-        let q = Quaternion::new(0.7071067811865476, 0.0, 0.0, 0.7071067811865475); // cos(pi/4), 0, 0, sin(pi/4)
+        let q = Quaternion::from_vector(&Vector3::new(0., 0., PI / 2.));
         let v = Vector3::new(1.0, 0.0, 0.0);
         let rotated = q.rotate_vector(&v);
         assert_vector3_eq(&rotated, &Vector3::new(0.0, 1.0, 0.0));

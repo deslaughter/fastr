@@ -49,8 +49,8 @@ impl Mesh {
         mapping::MeshMapping::new(self, destination)
     }
 
-    pub fn as_vtk(&self) -> Vtk {
-        let rotations = self.nodes.iter().map(|n| n.r().as_matrix()).collect_vec();
+    pub fn to_vtk(&self) -> Vtk {
+        let rotations = self.nodes.iter().map(|n| n.r().to_matrix()).collect_vec();
         let n_nodes = self.nodes.len();
 
         Vtk {
@@ -62,7 +62,7 @@ impl Mesh {
                 points: IOBuffer::F64(
                     self.nodes
                         .iter()
-                        .flat_map(|n| n.x().as_array())
+                        .flat_map(|n| n.x().to_array())
                         .collect_vec(),
                 ),
                 cells: Cells {

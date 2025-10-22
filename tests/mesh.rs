@@ -51,11 +51,11 @@ fn orbiting_mesh() {
     (0..100).for_each(|step| {
         // Export to VTK
         earth
-            .as_vtk()
+            .to_vtk()
             .export_ascii(format!("{}/earth_{:03}.vtk", vtk_dir, step))
             .unwrap();
 
-        moon.as_vtk()
+        moon.to_vtk()
             .export_ascii(format!("{}/moon_{:03}.vtk", vtk_dir, step))
             .unwrap();
 

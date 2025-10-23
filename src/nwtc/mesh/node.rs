@@ -4,8 +4,8 @@ use crate::nwtc::{Quaternion, Vector3};
 pub struct Node {
     pub id: usize,
     pub x0: Vector3,
-    pub ux: Vector3,
-    pub vx: Vector3,
+    pub ut: Vector3,
+    pub vt: Vector3,
     pub ax: Vector3,
     pub r0: Quaternion,
     pub ur: Quaternion,
@@ -20,8 +20,8 @@ impl Node {
         Self {
             id,
             x0,
-            ux: Vector3::zero(),
-            vx: Vector3::zero(),
+            ut: Vector3::zero(),
+            vt: Vector3::zero(),
             ax: Vector3::zero(),
             r0,
             ur: Quaternion::identity(),
@@ -33,7 +33,7 @@ impl Node {
     }
 
     pub fn translate(&mut self, dux: Vector3) -> &mut Node {
-        self.ux += dux;
+        self.ut += dux;
         self
     }
 
@@ -42,7 +42,7 @@ impl Node {
     }
 
     pub fn x(&self) -> Vector3 {
-        self.x0 + self.ux
+        self.x0 + self.ut
     }
 
     pub fn r(&self) -> Quaternion {
@@ -50,7 +50,7 @@ impl Node {
     }
 
     pub fn set_x(&mut self, x: Vector3) -> &mut Node {
-        self.ux = x - self.x0;
+        self.ut = x - self.x0;
         self
     }
 
@@ -61,8 +61,8 @@ impl Node {
 
     pub fn copy_motion_from(&mut self, other: &Node) -> &mut Self {
         self.x0 = other.x0;
-        self.ux = other.ux;
-        self.vx = other.vx;
+        self.ut = other.ut;
+        self.vt = other.vt;
         self.ax = other.ax;
         self.r0 = other.r0;
         self.ur = other.ur;

@@ -1,22 +1,47 @@
-use bitflags::bitflags;
-use itertools::Itertools;
-use vtkio::model::*;
-
 pub mod builder;
-pub mod element;
 pub mod mapping;
 pub mod node;
 
 pub use builder::*;
-pub use element::*;
 pub use mapping::*;
 pub use node::*;
+
+use bitflags::bitflags;
+use itertools::Itertools;
+use vtkio::model::*;
 
 #[derive(Debug, Clone)]
 pub struct Mesh {
     pub id: usize,
-    pub nodes: Vec<node::Node>,
-    pub elements: Vec<element::Element>,
+    pub nodes: Vec<Node>,
+    pub elements: Vec<Element>,
+}
+
+bitflags! {
+    /// Represents which fields are active in a mesh.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    struct Fields: u32 {
+        const Force = 1 << 0;
+        const Moment = 1 << 1;
+        const TranslationalDisplacement = 1 << 2;
+        const AngularDisplacement = 1 << 3;
+        const TranslationalVelocity = 1 << 4;
+        const AngularVelocity = 1 << 5;
+        const TranslationalAcceleration = 1 << 6;
+        const AngularAcceleration = 1 << 7;
+
+        const Load = Self::Force.bits() | Self::Moment.bits();
+
+        const Motion = Self::TranslationalDisplacement.bits() | Self::AngularDisplacement.bits() |
+                       Self::TranslationalVelocity.bits() | Self::AngularVelocity.bits() |
+                       Self::TranslationalAcceleration.bits() | Self::AngularAcceleration.bits();
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Element {
+    Point(usize),
+    Line2((usize, usize)),
 }
 
 impl Mesh {
@@ -45,8 +70,8 @@ impl Mesh {
         self
     }
 
-    pub fn create_mapping(&self, destination: &Mesh) -> mapping::MeshMapping {
-        mapping::MeshMapping::new(self, destination)
+    pub fn create_mapping(&self, destination: &Mesh) -> Mapping {
+        Mapping::new(self, destination)
     }
 
     pub fn to_vtk(&self) -> Vtk {
@@ -110,7 +135,7 @@ impl Mesh {
                             data: IOBuffer::F32(
                                 self.nodes
                                     .iter()
-                                    .flat_map(|n| [n.vx.x as f32, n.vx.y as f32, n.vx.z as f32])
+                                    .flat_map(|n| [n.vt.x as f32, n.vt.y as f32, n.vt.z as f32])
                                     .collect_vec(),
                             ),
                         }),
@@ -169,26 +194,5 @@ impl Mesh {
                 },
             }),
         }
-    }
-}
-
-bitflags! {
-    /// Represents which fields are active in a mesh.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    struct Fields: u32 {
-        const Force = 1 << 0;
-        const Moment = 1 << 1;
-        const TranslationalDisplacement = 1 << 2;
-        const AngularDisplacement = 1 << 3;
-        const TranslationalVelocity = 1 << 4;
-        const AngularVelocity = 1 << 5;
-        const TranslationalAcceleration = 1 << 6;
-        const AngularAcceleration = 1 << 7;
-
-        const Load = Self::Force.bits() | Self::Moment.bits();
-
-        const Motion = Self::TranslationalDisplacement.bits() | Self::AngularDisplacement.bits() |
-                       Self::TranslationalVelocity.bits() | Self::AngularVelocity.bits() |
-                       Self::TranslationalAcceleration.bits() | Self::AngularAcceleration.bits();
     }
 }

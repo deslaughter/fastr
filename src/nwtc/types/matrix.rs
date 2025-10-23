@@ -8,7 +8,7 @@ use crate::nwtc::vector::Vector3;
 /// # Examples
 ///
 /// ```
-/// use crate::nwtc::matrix::Matrix3;
+/// use fastr::nwtc::Matrix3;
 ///
 /// // Create an identity matrix
 /// let identity = Matrix3::identity();
@@ -36,6 +36,8 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Matrix3;
+    ///
     /// let matrix = Matrix3::new([
     ///     [1.0, 0.0, 0.0],
     ///     [0.0, 1.0, 0.0],
@@ -53,6 +55,8 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Matrix3;
+    ///
     /// let identity = Matrix3::identity();
     /// assert_eq!(identity.get(0, 0), 1.0);
     /// assert_eq!(identity.get(1, 1), 1.0);
@@ -78,6 +82,8 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Matrix3;
+    ///
     /// let matrix = Matrix3::identity();
     /// assert_eq!(matrix.get(0, 0), 1.0);
     /// assert_eq!(matrix.get(0, 1), 0.0);
@@ -99,6 +105,8 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Matrix3;
+    ///
     /// let matrix = Matrix3::identity();
     /// let first_column = matrix.column(0);
     /// assert_eq!(first_column, [1.0, 0.0, 0.0]);
@@ -120,6 +128,8 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Matrix3;
+    ///
     /// let matrix = Matrix3::identity();
     /// let first_row = matrix.row(0);
     /// assert_eq!(first_row, [1.0, 0.0, 0.0]);
@@ -141,6 +151,8 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::{Matrix3, Vector3};
+    ///
     /// let rows = [
     ///     Vector3::new(1.0, 2.0, 3.0),
     ///     Vector3::new(4.0, 5.0, 6.0),
@@ -149,6 +161,7 @@ impl Matrix3 {
     /// let matrix = Matrix3::from_rows(&rows);
     /// ```
     pub fn from_rows(r: &[Vector3]) -> Self {
+        assert_eq!(r.len(), 3, "Expected exactly 3 row vectors");
         Self {
             data: [
                 [r[0].x, r[0].y, r[0].z],
@@ -171,6 +184,8 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::{Matrix3, Vector3};
+    ///
     /// let columns = [
     ///     Vector3::new(1.0, 4.0, 7.0),
     ///     Vector3::new(2.0, 5.0, 8.0),
@@ -179,6 +194,7 @@ impl Matrix3 {
     /// let matrix = Matrix3::from_columns(&columns);
     /// ```
     pub fn from_columns(c: &[Vector3]) -> Self {
+        assert_eq!(c.len(), 3, "Expected exactly 3 column vectors");
         Self {
             data: [
                 [c[0].x, c[1].x, c[2].x],
@@ -199,6 +215,8 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Matrix3;
+    ///
     /// let matrix = Matrix3::new([
     ///     [1.0, 2.0, 3.0],
     ///     [4.0, 5.0, 6.0],
@@ -225,6 +243,8 @@ impl Matrix3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Matrix3;
+///
 /// let a = Matrix3::identity();
 /// let b = Matrix3::identity();
 /// let result = a - b; // Should be zero matrix
@@ -262,6 +282,8 @@ impl std::ops::Sub for Matrix3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Matrix3;
+///
 /// let matrix = Matrix3::identity();
 /// let value = matrix[(0, 0)]; // Gets the element at row 0, column 0
 /// assert_eq!(value, 1.0);
@@ -281,6 +303,8 @@ impl std::ops::Index<(usize, usize)> for Matrix3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Matrix3;
+///
 /// let matrix = Matrix3::identity();
 /// let negated = -matrix;
 /// assert_eq!(negated.get(0, 0), -1.0);
@@ -307,6 +331,8 @@ impl std::ops::Neg for Matrix3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Matrix3;
+///
 /// let a = Matrix3::identity();
 /// let b = Matrix3::identity();
 /// let result = a * b; // Should equal identity matrix
@@ -336,6 +362,8 @@ impl std::ops::Mul<Matrix3> for Matrix3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::{Matrix3, Vector3};
+///
 /// let matrix = Matrix3::identity();
 /// let vector = Vector3::new(1.0, 2.0, 3.0);
 /// let result = matrix * vector; // Should equal the original vector

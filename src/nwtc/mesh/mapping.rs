@@ -1,8 +1,8 @@
 use itertools::Itertools;
 use kiddo::{float::kdtree::KdTree, SquaredEuclidean};
 
-use crate::nwtc::Element;
-use crate::nwtc::Mesh;
+use crate::nwtc::mesh::Element;
+use crate::nwtc::mesh::Mesh;
 use crate::nwtc::Vector3;
 
 /// Represents a mapping between elements in different meshes.
@@ -38,19 +38,7 @@ pub struct ElementMapping {
 /// The mapping is built using spatial proximity algorithms (KD-tree) to find
 /// the nearest elements between meshes and establish coupling relationships.
 ///
-/// # Examples
-///
-/// ```
-/// let source_mesh = create_source_mesh();
-/// let destination_mesh = create_destination_mesh();
-///
-/// // Create mapping between meshes
-/// let mapping = MeshMapping::new(&source_mesh, &destination_mesh);
-///
-/// // Transfer motion from source to destination
-/// mapping.map_motion(&source_mesh, &mut destination_mesh);
-/// ```
-pub struct MeshMapping {
+pub struct Mapping {
     /// The ID of the source mesh
     pub source_id: usize,
     /// The ID of the destination mesh
@@ -66,7 +54,7 @@ pub struct MeshMapping {
     // line2_to_line2: Vec<ElementMapping>,
 }
 
-impl MeshMapping {
+impl Mapping {
     /// Creates a new mesh mapping between source and destination meshes.
     ///
     /// This constructor builds spatial relationships between the meshes using
@@ -89,11 +77,6 @@ impl MeshMapping {
     /// 2. For each source node, finds the nearest destination point element
     /// 3. Stores the mapping relationship with distance and coupling arm information
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// let mapping = MeshMapping::new(&aerodynamic_mesh, &structural_mesh);
-    /// ```
     pub fn new(source: &Mesh, destination: &Mesh) -> Self {
         // Build KD-tree for efficient spatial searching of destination elements
         let mut kdtree: kiddo::float::kdtree::KdTree<f64, usize, 3, 32, u32> =
@@ -172,12 +155,6 @@ impl MeshMapping {
     /// **Acceleration:**
     /// - `a_d = a_s + p × α_s + ω_s × (p × ω_s)` including centripetal acceleration
     ///
-    /// # Examples
-    ///
-    /// ```
-    /// // After updating source mesh motion
-    /// mapping.map_motion(&updated_source_mesh, &mut destination_mesh);
-    /// ```
     pub fn map_motion(&self, source: &Mesh, destination: &mut Mesh) {
         // Map point-to-point motions
         self.point_to_point
@@ -197,14 +174,14 @@ impl MeshMapping {
 
                         // Map translational displacement
                         // u_d = u_s + (p0 - R*p0) accounts for rotation of the coupling arm
-                        node_d.ux = node_s.ux + p0 - node_s.ur.rotate_vector(&p0);
+                        node_d.ut = node_s.ut + p0 - node_s.ur.rotate_vector(&p0);
 
                         // Map rotational displacement (rigid body assumption)
                         node_d.ur = node_s.ur;
 
                         // Map translational velocity
                         // v_d = v_s + p × ω_s (velocity due to rotation at offset point)
-                        node_d.vx = node_s.vx + p.cross(&node_s.vr);
+                        node_d.vt = node_s.vt + p.cross(&node_s.vr);
 
                         // Map rotational velocity (rigid body assumption)
                         node_d.vr = node_s.vr;
@@ -217,6 +194,31 @@ impl MeshMapping {
 
                         // Map rotational acceleration (rigid body assumption)
                         node_d.ar = node_s.ar;
+                    }
+                    _ => panic!("Mapped element is not a point element"),
+                }
+            });
+    }
+
+    pub fn map_loads(&self, source: &Mesh, destination: &mut Mesh) {
+        // Map point-to-point loads
+        self.point_to_point
+            .iter()
+            .enumerate()
+            .for_each(|(source_node_id, mapping)| {
+                let node_s = &source.nodes[source_node_id];
+                match &destination.elements[mapping.destination_elem_id] {
+                    Element::Point(destination_node_id) => {
+                        let node_d = &mut destination.nodes[*destination_node_id];
+
+                        // Map forces directly
+                        node_d.f += node_s.f;
+
+                        // Calculate moment arm in current configuration
+                        let moment_arm = node_s.ur.rotate_vector(&mapping.couple_arm);
+
+                        // Map moments including couple from force at offset point
+                        node_d.m += node_s.m + moment_arm.cross(&node_s.f);
                     }
                     _ => panic!("Mapped element is not a point element"),
                 }

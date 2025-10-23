@@ -9,7 +9,7 @@ use crate::nwtc::Matrix3;
 /// # Examples
 ///
 /// ```
-/// use crate::nwtc::vector::Vector3;
+/// use fastr::nwtc::Vector3;
 ///
 /// // Create a new vector
 /// let v1 = Vector3::new(1.0, 2.0, 3.0);
@@ -43,6 +43,8 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Vector3;
+    ///
     /// let vector = Vector3::new(1.0, 2.0, 3.0);
     /// assert_eq!(vector.x, 1.0);
     /// assert_eq!(vector.y, 2.0);
@@ -57,6 +59,8 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Vector3;
+    ///
     /// let zero = Vector3::zero();
     /// assert_eq!(zero.x, 0.0);
     /// assert_eq!(zero.y, 0.0);
@@ -81,6 +85,8 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Vector3;
+    ///
     /// let vector = Vector3::new(3.0, 4.0, 0.0);
     /// assert_eq!(vector.norm(), 5.0);
     /// ```
@@ -100,6 +106,8 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Vector3;
+    ///
     /// let vector = Vector3::new(3.0, 4.0, 0.0);
     /// let unit = vector.unit();
     /// assert!((unit.norm() - 1.0).abs() < f64::EPSILON);
@@ -126,6 +134,8 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Vector3;
+    ///
     /// let vector = Vector3::new(1.0, 2.0, 3.0);
     /// let array = vector.to_array();
     /// assert_eq!(array, [1.0, 2.0, 3.0]);
@@ -147,6 +157,8 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Vector3;
+    ///
     /// let array = [1.0, 2.0, 3.0];
     /// let vector = Vector3::from_array(array);
     /// assert_eq!(vector.x, 1.0);
@@ -174,6 +186,8 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Vector3;
+    ///
     /// let v1 = Vector3::new(1.0, 2.0, 3.0);
     /// let v2 = Vector3::new(4.0, 5.0, 6.0);
     /// let dot = v1.dot(&v2);
@@ -199,6 +213,8 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Vector3;
+    ///
     /// let v1 = Vector3::new(1.0, 0.0, 0.0);
     /// let v2 = Vector3::new(0.0, 1.0, 0.0);
     /// let cross = v1.cross(&v2);
@@ -231,6 +247,8 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Vector3;
+    ///
     /// let v = Vector3::new(1.0, 2.0, 3.0);
     /// let skew = v.skew_symmetric();
     /// // skew * u should equal v.cross(&u) for any vector u
@@ -251,6 +269,8 @@ impl Vector3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Vector3;
+///
 /// let v1 = Vector3::new(1.0, 2.0, 3.0);
 /// let v2 = Vector3::new(4.0, 5.0, 6.0);
 /// let result = v1 + v2;
@@ -275,6 +295,8 @@ impl std::ops::Add for Vector3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Vector3;
+///
 /// let v1 = Vector3::new(5.0, 7.0, 9.0);
 /// let v2 = Vector3::new(1.0, 2.0, 3.0);
 /// let result = v1 - v2;
@@ -299,6 +321,8 @@ impl std::ops::Sub for Vector3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Vector3;
+///
 /// let mut v1 = Vector3::new(1.0, 2.0, 3.0);
 /// let v2 = Vector3::new(4.0, 5.0, 6.0);
 /// v1 += v2;
@@ -319,6 +343,8 @@ impl std::ops::AddAssign for Vector3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Vector3;
+///
 /// let vector = Vector3::new(1.0, 2.0, 3.0);
 /// let scaled = vector * 2.0;
 /// assert_eq!(scaled, Vector3::new(2.0, 4.0, 6.0));
@@ -342,6 +368,8 @@ impl std::ops::Mul<f64> for Vector3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Vector3;
+///
 /// let vector = Vector3::new(2.0, 4.0, 6.0);
 /// let scaled = vector / 2.0;
 /// assert_eq!(scaled, Vector3::new(1.0, 2.0, 3.0));
@@ -365,6 +393,8 @@ impl std::ops::Div<f64> for Vector3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Vector3;
+///
 /// let vector = Vector3::new(1.0, -2.0, 3.0);
 /// let negated = -vector;
 /// assert_eq!(negated, Vector3::new(-1.0, 2.0, -3.0));
@@ -392,6 +422,9 @@ impl std::ops::Neg for Vector3 {
 /// # Examples
 ///
 /// ```
+/// use fastr::nwtc::Vector3;
+/// use fastr::nwtc::Matrix3;
+///
 /// let vector = Vector3::new(1.0, 2.0, 3.0);
 /// let matrix = Matrix3::identity();
 /// let result = vector * matrix;

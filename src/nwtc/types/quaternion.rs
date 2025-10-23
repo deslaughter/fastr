@@ -19,8 +19,8 @@ use crate::nwtc::{matrix::Matrix3, vector::Vector3};
 /// # Examples
 ///
 /// ```
-/// use crate::nwtc::quaternion::Quaternion;
-/// use crate::nwtc::vector::Vector3;
+/// use fastr::nwtc::Quaternion;
+/// use fastr::nwtc::Vector3;
 /// use std::f64::consts::PI;
 ///
 /// // Create identity quaternion (no rotation)
@@ -59,6 +59,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    ///
     /// let q = Quaternion::new(1.0, 0.0, 0.0, 0.0); // Identity quaternion
     /// ```
     pub fn new(w: f64, x: f64, y: f64, z: f64) -> Self {
@@ -72,6 +74,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    /// use fastr::nwtc::Vector3;
     /// let identity = Quaternion::identity();
     /// let vector = Vector3::new(1.0, 2.0, 3.0);
     /// let rotated = identity.rotate_vector(&vector);
@@ -96,8 +100,13 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    ///
     /// let q = Quaternion::from_array([1.0, 0.0, 0.0, 0.0]);
-    /// assert_eq!(q, Quaternion::identity());
+    /// assert_eq!(q.w, Quaternion::identity().w);
+    /// assert_eq!(q.x, Quaternion::identity().x);
+    /// assert_eq!(q.y, Quaternion::identity().y);
+    /// assert_eq!(q.z, Quaternion::identity().z);
     /// ```
     #[inline]
     pub fn from_array(arr: [f64; 4]) -> Self {
@@ -118,6 +127,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    ///
     /// let q = Quaternion::new(1.0, 2.0, 3.0, 4.0);
     /// let arr = q.to_array();
     /// assert_eq!(arr, [1.0, 2.0, 3.0, 4.0]);
@@ -139,6 +150,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    ///
     /// let q = Quaternion::identity();
     /// assert_eq!(q.norm(), 1.0);
     /// ```
@@ -160,6 +173,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    ///
     /// let q = Quaternion::new(2.0, 0.0, 0.0, 0.0);
     /// let normalized = q.normalize();
     /// assert!((normalized.norm() - 1.0).abs() < f64::EPSILON);
@@ -191,6 +206,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    ///
     /// let q = Quaternion::new(0.7071, 0.7071, 0.0, 0.0); // 90° around X
     /// let q_inv = q.inverse();
     /// let identity = q * q_inv; // Should be close to identity
@@ -221,8 +238,12 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// let q1 = Quaternion::from_vector(Vector3::new(PI/2, 0.0, 0.0)); // 90° around X
-    /// let q2 = Quaternion::from_vector(Vector3::new(0.0, PI/2, 0.0)); // 90° around Y
+    /// use fastr::nwtc::Quaternion;
+    /// use fastr::nwtc::Vector3;
+    /// use std::f64::consts::PI;
+    ///
+    /// let q1 = Quaternion::from_vector(Vector3::new(PI/2., 0.0, 0.0)); // 90° around X
+    /// let q2 = Quaternion::from_vector(Vector3::new(0.0, PI/2., 0.0)); // 90° around Y
     /// let composed = q1.compose(&q2);
     /// ```
     pub fn compose(&self, other: &Self) -> Self {
@@ -251,7 +272,11 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// let q = Quaternion::from_vector(Vector3::new(0.0, 0.0, PI/2)); // 90° around Z
+    /// use fastr::nwtc::Quaternion;
+    /// use fastr::nwtc::Vector3;
+    /// use std::f64::consts::PI;
+    ///
+    /// let q = Quaternion::from_vector(Vector3::new(0.0, 0.0, PI/2.)); // 90° around Z
     /// let v = Vector3::new(1.0, 0.0, 0.0); // X-axis vector
     /// let rotated = q.rotate_vector(&v);
     /// // rotated should be approximately (0, 1, 0) - Y-axis vector
@@ -279,7 +304,10 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// let rotation_vector = Vector3::new(PI/2, 0.0, 0.0); // 90° around X-axis
+    /// use fastr::nwtc::{Quaternion, Vector3};
+    /// use std::f64::consts::PI;
+    ///
+    /// let rotation_vector = Vector3::new(PI/2., 0.0, 0.0); // 90° around X-axis
     /// let q = Quaternion::from_vector(rotation_vector);
     /// ```
     pub fn from_vector(rv: Vector3) -> Self {
@@ -310,9 +338,11 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    ///
     /// let q = Quaternion::new(0.7071, 0.7071, 0.0, 0.0); // 90° around X
     /// let rotation_vector = q.to_vector();
-    /// // rotation_vector should be approximately (PI/2, 0, 0)
+    /// // rotation_vector should be approximately (PI/2., 0, 0)
     /// ```
     pub fn to_vector(self) -> Vector3 {
         let qw = self.w.clamp(-1.0, 1.0);
@@ -347,6 +377,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::{Matrix3, Quaternion};
+    ///
     /// // 90° rotation around Z-axis
     /// let matrix = Matrix3::new([
     ///     [0.0, -1.0, 0.0],
@@ -405,7 +437,11 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// let q = Quaternion::from_vector(Vector3::new(0.0, 0.0, PI/2)); // 90° around Z
+    /// use fastr::nwtc::Quaternion;
+    /// use fastr::nwtc::Vector3;
+    /// use std::f64::consts::PI;
+    ///
+    /// let q = Quaternion::from_vector(Vector3::new(0.0, 0.0, PI/2.)); // 90° around Z
     /// let matrix = q.to_matrix();
     /// let vector = Vector3::new(1.0, 0.0, 0.0);
     /// let rotated = matrix * vector; // Should give (0, 1, 0)
@@ -448,6 +484,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    ///
     /// let q1 = Quaternion::identity();
     /// let q2 = Quaternion::identity();
     /// let dot = q1.dot(&q2);
@@ -474,10 +512,14 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    /// use fastr::nwtc::Vector3;
+    /// use std::f64::consts::PI;
+    ///
     /// let q1 = Quaternion::identity();
-    /// let q2 = Quaternion::from_vector(Vector3::new(PI/2, 0.0, 0.0)); // 90° around X
+    /// let q2 = Quaternion::from_vector(Vector3::new(PI/2., 0.0, 0.0)); // 90° around X
     /// let angle = q1.angle_to(&q2);
-    /// assert!((angle - PI/2).abs() < 1e-10);
+    /// assert!((angle - PI/2.).abs() < 1e-10);
     /// ```
     pub fn angle_to(&self, other: &Self) -> f64 {
         let dot = self.dot(other).abs().clamp(0.0, 1.0);
@@ -505,8 +547,12 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
+    /// use fastr::nwtc::Quaternion;
+    /// use fastr::nwtc::Vector3;
+    /// use std::f64::consts::PI;
+    ///
     /// let q1 = Quaternion::identity();
-    /// let q2 = Quaternion::from_vector(Vector3::new(PI/2, 0.0, 0.0)); // 90° around X
+    /// let q2 = Quaternion::from_vector(Vector3::new(PI/2., 0.0, 0.0)); // 90° around X
     /// let halfway = q1.slerp(&q2, 0.5); // 45° rotation around X
     /// ```
     pub fn slerp(&self, other: &Self, t: f64) -> Self {
@@ -568,8 +614,11 @@ impl Quaternion {
 /// # Examples
 ///
 /// ```
-/// let q1 = Quaternion::from_vector(Vector3::new(PI/4, 0.0, 0.0));
-/// let q2 = Quaternion::from_vector(Vector3::new(0.0, PI/4, 0.0));
+/// use fastr::nwtc::{Quaternion, Vector3};
+/// use std::f64::consts::PI;
+///
+/// let q1 = Quaternion::from_vector(Vector3::new(PI/4., 0.0, 0.0));
+/// let q2 = Quaternion::from_vector(Vector3::new(0.0, PI/4., 0.0));
 /// let composed = q1 * q2; // Apply q1 rotation, then q2 rotation
 /// ```
 impl std::ops::Mul for Quaternion {

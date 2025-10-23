@@ -3,7 +3,7 @@ extern crate fastr;
 use std::{f64::consts::PI, fs};
 
 use approx::assert_relative_eq;
-use fastr::nwtc::{matrix::Matrix3, mesh::MeshBuilder, quaternion::Quaternion, vector::Vector3};
+use fastr::nwtc::{Matrix3, MeshBuilder, Quaternion, Vector3};
 use itertools::Itertools;
 
 #[test]
@@ -32,7 +32,7 @@ fn orbiting_mesh() {
     let orbit = earth.create_mapping(&moon);
 
     // set translational velocity of the earth
-    earth.nodes[0].vx.x = 0.05;
+    earth.nodes[0].vt.x = 0.05;
 
     // Set rotational velocity of the earth
     earth.nodes[0].vr.z = 0.1;
@@ -41,8 +41,8 @@ fn orbiting_mesh() {
     orbit.map_motion(&earth, &mut moon);
 
     // Check that the moon's translational velocity is correct
-    let expected_vx = earth.nodes[0].vx + Vector3::new(0., 0.1, 0.);
-    assert_eq!(moon.nodes[0].vx, expected_vx);
+    let expected_vx = earth.nodes[0].vt + Vector3::new(0., 0.1, 0.);
+    assert_eq!(moon.nodes[0].vt, expected_vx);
 
     let vtk_dir = "tests/vtk";
     fs::create_dir_all(vtk_dir).unwrap();
@@ -60,7 +60,7 @@ fn orbiting_mesh() {
             .unwrap();
 
         // Update earth position and orientation
-        let dx = earth.nodes[0].vx * dt;
+        let dx = earth.nodes[0].vt * dt;
         earth.nodes[0].translate(dx);
         let dr = Quaternion::from_vector(earth.nodes[0].vr * dt);
         earth.nodes[0].rotate(dr);
@@ -123,12 +123,12 @@ fn mesh_linearization() {
                 src.copy_motion_from(&src_ref);
                 src.nodes[0].translate(p);
                 mapping.map_motion(&src, &mut dst);
-                let ux_p = dst.nodes[0].ux;
+                let ux_p = dst.nodes[0].ut;
 
                 src.copy_motion_from(&src_ref);
                 src.nodes[0].translate(-p);
                 mapping.map_motion(&src, &mut dst);
-                let ux_m = dst.nodes[0].ux;
+                let ux_m = dst.nodes[0].ut;
 
                 (ux_p - ux_m) / (2. * perturb)
             })
@@ -157,12 +157,12 @@ fn mesh_linearization() {
                 src.copy_motion_from(&src_ref);
                 src.nodes[0].rotate(q);
                 mapping.map_motion(&src, &mut dst);
-                let ux_p = dst.nodes[0].ux;
+                let ux_p = dst.nodes[0].ut;
 
                 src.copy_motion_from(&src_ref);
                 src.nodes[0].rotate(q.inverse());
                 mapping.map_motion(&src, &mut dst);
-                let ux_m = dst.nodes[0].ux;
+                let ux_m = dst.nodes[0].ut;
 
                 (ux_p - ux_m) / (2. * perturb)
             })

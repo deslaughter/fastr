@@ -1,4 +1,5 @@
-use crate::nwtc::{mesh::Element, mesh::Mesh, mesh::Node, quaternion::Quaternion, vector::Vector3};
+use crate::nwtc::mesh::{Element, Mesh, Node};
+use crate::nwtc::{Quaternion, Vector3};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 fn get_id() -> usize {

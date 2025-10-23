@@ -1,8 +1,7 @@
 use itertools::Itertools;
 use kiddo::{float::kdtree::KdTree, SquaredEuclidean};
 
-use crate::nwtc::mesh::Element;
-use crate::nwtc::mesh::Mesh;
+use crate::nwtc::mesh::{Element, Mesh};
 use crate::nwtc::Vector3;
 
 /// Represents a mapping between elements in different meshes.
@@ -118,7 +117,7 @@ impl Mapping {
                         destination_elem_id,
                         distance: nearest_node.distance,
                         // Calculate coupling arm from destination to source
-                        couple_arm: node_source.x0 - destination.nodes[destination_node_id].x0,
+                        couple_arm: destination.nodes[destination_node_id].x0 - node_source.x0,
                         shape_function: Vec::new(), // Not used for point-to-point mapping
                     }
                 })
@@ -167,21 +166,21 @@ impl Mapping {
                         let node_d = &mut destination.nodes[*destination_node_id];
 
                         // Initial position vector from source to destination
-                        let p0 = node_s.x0 - node_d.x0;
+                        let p0 = node_d.x0 - node_s.x0;
 
                         // Current position vector from source to destination (rotated)
                         let p = node_s.ur.rotate_vector(&p0);
 
                         // Map translational displacement
                         // u_d = u_s + (p0 - R*p0) accounts for rotation of the coupling arm
-                        node_d.ut = node_s.ut + p0 - node_s.ur.rotate_vector(&p0);
+                        node_d.ut = node_s.ut + node_s.ur.rotate_vector(&p0) - p0;
 
                         // Map rotational displacement (rigid body assumption)
                         node_d.ur = node_s.ur;
 
                         // Map translational velocity
                         // v_d = v_s + p × ω_s (velocity due to rotation at offset point)
-                        node_d.vt = node_s.vt + p.cross(&node_s.vr);
+                        node_d.vt = node_s.vt + node_s.vr.cross(&p);
 
                         // Map rotational velocity (rigid body assumption)
                         node_d.vr = node_s.vr;
@@ -190,7 +189,7 @@ impl Mapping {
                         // a_d = a_s + p × α_s + ω_s × (p × ω_s)
                         // Includes both angular acceleration and centripetal acceleration terms
                         node_d.ax =
-                            node_s.ax + p.cross(&node_s.ar) + node_s.vr.cross(&p.cross(&node_s.vr));
+                            node_s.ax + p.cross(&node_s.ar) + node_s.vr.cross(&node_s.vr.cross(&p));
 
                         // Map rotational acceleration (rigid body assumption)
                         node_d.ar = node_s.ar;
@@ -211,11 +210,17 @@ impl Mapping {
                     Element::Point(destination_node_id) => {
                         let node_d = &mut destination.nodes[*destination_node_id];
 
+                        // Initial position vector from source to destination
+                        let p0 = node_d.x0 - node_s.x0;
+
+                        // Current position vector from source to destination (rotated)
+                        let p = node_s.ur.rotate_vector(&p0);
+
                         // Map forces directly
                         node_d.f += node_s.f;
 
                         // Calculate moment arm in current configuration
-                        let moment_arm = node_s.ur.rotate_vector(&mapping.couple_arm);
+                        let moment_arm = node_s.ur.rotate_vector(&p);
 
                         // Map moments including couple from force at offset point
                         node_d.m += node_s.m + moment_arm.cross(&node_s.f);
@@ -223,5 +228,155 @@ impl Mapping {
                     _ => panic!("Mapped element is not a point element"),
                 }
             });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::nwtc::{MeshBuilder, Quaternion};
+    use approx::assert_relative_eq;
+    use std::f64::consts::FRAC_PI_2;
+
+    fn create_test_meshes_and_mappings() -> (Mesh, Mesh, Mapping) {
+        // Create source mesh with 1 nodes
+        let mut mb = MeshBuilder::new();
+        let nid = mb
+            .add_node()
+            .set_position(0.0, 0.0, 0.0)
+            .set_orientation(Quaternion::identity())
+            .build();
+        mb.add_point_element(nid);
+        let mesh_source = mb.build();
+
+        // Create destination mesh with 1 nodes slightly offset
+        let mut mb = MeshBuilder::new();
+        let nid = mb
+            .add_node()
+            .set_position(1.0, 0.0, 0.0)
+            .set_orientation(Quaternion::identity())
+            .build();
+        mb.add_point_element(nid);
+        let mesh_destination = mb.build();
+
+        let mapping = Mapping::new(&mesh_source, &mesh_destination);
+
+        (mesh_source, mesh_destination, mapping)
+    }
+
+    #[test]
+    fn test_mapping_creation() {
+        let (source, destination, mapping) = create_test_meshes_and_mappings();
+
+        assert_eq!(mapping.source_id, source.id);
+        assert_eq!(mapping.destination_id, destination.id);
+        assert_eq!(mapping.point_to_point.len(), source.nodes.len());
+
+        // Check mapping distances and couple arms
+        assert_relative_eq!(mapping.point_to_point[0].distance, 1., epsilon = 1e-10);
+        assert_relative_eq!(mapping.point_to_point[0].couple_arm.x, 1., epsilon = 1e-10);
+        assert_relative_eq!(mapping.point_to_point[0].couple_arm.y, 0., epsilon = 1e-10);
+        assert_relative_eq!(mapping.point_to_point[0].couple_arm.z, 0., epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_map_motion_translational() {
+        let (mut source, mut destination, mapping) = create_test_meshes_and_mappings();
+
+        // Apply displacement to source mesh
+        source.nodes[0].translate(Vector3::new(0.5, 0.3, 0.2));
+
+        // Create mapping and transfer motion
+        mapping.map_motion(&source, &mut destination);
+
+        // Check if displacement was properly transferred
+        assert_relative_eq!(destination.nodes[0].ut.x, 0.5, epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].ut.y, 0.3, epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].ut.z, 0.2, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_map_motion_rotational() {
+        let (mut source, mut destination, mapping) = create_test_meshes_and_mappings();
+
+        // Apply rotation to source mesh
+        source.nodes[0].rotate(Quaternion::from_vector(Vector3::new(0.0, 0.0, FRAC_PI_2)));
+
+        // Create mapping and transfer motion
+        mapping.map_motion(&source, &mut destination);
+
+        // Check if rotation was properly transferred
+        assert_relative_eq!(
+            destination.nodes[0].ur.w,
+            source.nodes[0].ur.w,
+            epsilon = 1e-10
+        );
+        assert_relative_eq!(
+            destination.nodes[0].ur.x,
+            source.nodes[0].ur.x,
+            epsilon = 1e-10
+        );
+        assert_relative_eq!(
+            destination.nodes[0].ur.y,
+            source.nodes[0].ur.y,
+            epsilon = 1e-10
+        );
+        assert_relative_eq!(
+            destination.nodes[0].ur.z,
+            source.nodes[0].ur.z,
+            epsilon = 1e-10
+        );
+
+        // Check displacement due to rotation
+        assert_relative_eq!(destination.nodes[0].ut.x, -1., epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].ut.y, 1., epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].ut.z, 0., epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_map_velocities() {
+        let (mut source, mut destination, mapping) = create_test_meshes_and_mappings();
+
+        // Apply velocities to source mesh
+        source.nodes[0].vt = Vector3::new(1.0, 2.0, 3.0);
+        source.nodes[0].vr = Vector3::new(0.0, 0.0, 2.0); // Angular velocity around z-axis
+
+        // Transfer motion
+        mapping.map_motion(&source, &mut destination);
+
+        // Check linear velocity: v_d = v_s + p × ω_s
+        // p = [1, 0, 0], ω = [0, 0, 2]
+        // p × ω_s = [0, 2, 0]
+        // v_d = [1, 2, 3] + [0, 2, 0] = [1, 4, 3]
+        assert_relative_eq!(destination.nodes[0].vt.x, 1.0, epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].vt.y, 4.0, epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].vt.z, 3.0, epsilon = 1e-10);
+
+        // Check angular velocity transfer
+        // ω_d = ω_s
+        assert_relative_eq!(destination.nodes[0].vr.z, 2.0, epsilon = 1e-10);
+    }
+
+    #[test]
+    fn test_map_loads() {
+        let (mut source, mut destination, mapping) = create_test_meshes_and_mappings();
+
+        // Apply forces and moments to source mesh
+        source.nodes[0].f = Vector3::new(10.0, 20.0, 30.0);
+        source.nodes[0].m = Vector3::new(5.0, 6.0, 7.0);
+
+        // Transfer loads
+        mapping.map_loads(&source, &mut destination);
+
+        // Check force transfer
+        assert_relative_eq!(destination.nodes[0].f.x, 10.0, epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].f.y, 20.0, epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].f.z, 30.0, epsilon = 1e-10);
+
+        // Check moment transfer including couple
+        // Additional moment = p × F = [1.0, 0, 0] × [10, 20, 30] = [0, -30, 20]
+        assert_relative_eq!(destination.nodes[0].m.x, 5.0, epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].m.y, -24.0, epsilon = 1e-10);
+        assert_relative_eq!(destination.nodes[0].m.z, 27.0, epsilon = 1e-10);
     }
 }

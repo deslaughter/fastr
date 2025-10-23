@@ -63,6 +63,16 @@ impl Mesh {
         self
     }
 
+    pub fn copy_loads_from(&mut self, other: &Mesh) -> &mut Self {
+        self.nodes
+            .iter_mut()
+            .zip(other.nodes.iter())
+            .for_each(|(node, other_node)| {
+                node.copy_loads_from(other_node);
+            });
+        self
+    }
+
     pub fn reset_loads(&mut self) -> &mut Self {
         self.nodes.iter_mut().for_each(|node| {
             node.reset_loads();

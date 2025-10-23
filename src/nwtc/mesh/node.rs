@@ -71,6 +71,12 @@ impl Node {
         self
     }
 
+    pub fn copy_loads_from(&mut self, other: &Node) -> &mut Self {
+        self.f = other.f;
+        self.m = other.m;
+        self
+    }
+
     pub fn reset_loads(&mut self) -> &mut Self {
         self.f = Vector3::zero();
         self.m = Vector3::zero();

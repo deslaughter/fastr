@@ -6,27 +6,24 @@ use approx::assert_relative_eq;
 use fastr::nwtc::{Matrix3, MeshBuilder, Quaternion, Vector3};
 use itertools::Itertools;
 
+fn build_point_mesh_at(x: f64, y: f64, z: f64) -> fastr::nwtc::mesh::Mesh {
+    let mut mb = MeshBuilder::new();
+    let node_id = mb
+        .add_node()
+        .set_position(x, y, z)
+        .set_orientation(Quaternion::identity())
+        .build();
+    mb.add_point_element(node_id);
+    mb.build()
+}
+
 #[test]
 fn orbiting_mesh() {
     // Create earth mesh
-    let mut mb = MeshBuilder::new();
-    let earth_node = mb
-        .add_node()
-        .set_position(0., 0., 0.)
-        .set_orientation(Quaternion::identity())
-        .build();
-    mb.add_point_element(earth_node);
-    let mut earth = mb.build();
+    let mut earth = build_point_mesh_at(0., 0., 0.);
 
     // Create moon mesh
-    let mut mb = MeshBuilder::new();
-    let moon_node = mb
-        .add_node()
-        .set_position(1., 0., 0.)
-        .set_orientation(Quaternion::identity())
-        .build();
-    mb.add_point_element(moon_node);
-    let mut moon = mb.build();
+    let mut moon = build_point_mesh_at(1., 0., 0.);
 
     // Create a mapping from earth to moon
     let orbit = earth.create_mapping(&moon);
@@ -71,26 +68,12 @@ fn orbiting_mesh() {
 }
 
 #[test]
-fn mesh_linearization() {
+fn mesh_displacement_linearization() {
     // Create source mesh
-    let mut mb = MeshBuilder::new();
-    let src_node = mb
-        .add_node()
-        .set_position(0., 0., 0.)
-        .set_orientation(Quaternion::identity())
-        .build();
-    mb.add_point_element(src_node);
-    let mut src = mb.build();
+    let mut src = build_point_mesh_at(0., 0., 0.);
 
     // Create destination mesh
-    let mut mb = MeshBuilder::new();
-    let dst_node = mb
-        .add_node()
-        .set_position(1., 0., 0.)
-        .set_orientation(Quaternion::identity())
-        .build();
-    mb.add_point_element(dst_node);
-    let mut dst = mb.build();
+    let mut dst = build_point_mesh_at(1., 0., 0.);
 
     // Displace source node
     src.nodes[0]
@@ -181,4 +164,90 @@ fn mesh_linearization() {
             assert_relative_eq!(m[(i, j)], exp[(i, j)], epsilon = 1e-10);
         });
     });
+}
+
+#[test]
+fn mesh_loads_linearization() {
+    // Create source mesh
+    let mut src = build_point_mesh_at(0., 0., 0.);
+
+    // Create destination mesh
+    let mut dst = build_point_mesh_at(1., 0., 0.);
+
+    // Create a mapping from source to destination
+    let mapping = src.create_mapping(&dst);
+
+    // Apply loads to source mesh
+    src.nodes[0].f = Vector3::new(1., 2., 3.);
+    src.nodes[0].m = Vector3::new(4., 5., 6.);
+
+    // Create copies of the source and destination meshes for reference
+    let src_ref = src.clone();
+    let dst_ref = dst.clone();
+
+    // Define perturbation size
+    let perturb = 1e-3;
+
+    // Calculate linearization of moment wrt source translational displacement
+    let m = Matrix3::from_rows(
+        &(0..3)
+            .map(|i| {
+                let p = match i {
+                    0 => Vector3::new(perturb, 0., 0.),
+                    1 => Vector3::new(0., perturb, 0.),
+                    2 => Vector3::new(0., 0., perturb),
+                    _ => Vector3::zero(),
+                };
+
+                src.copy_motion_from(&src_ref);
+                src.nodes[0].translate(p);
+                mapping.map_loads(&src, &mut dst);
+                let m_p = dst.nodes[0].m;
+
+                src.copy_motion_from(&src_ref);
+                src.nodes[0].translate(-p);
+                mapping.map_loads(&src, &mut dst);
+                let m_m = dst.nodes[0].m;
+
+                (m_p - m_m) / (2. * perturb)
+            })
+            .collect_vec(),
+    );
+
+    println!("dM_D/dut_S = \n{}", m);
+
+    // let exp = Matrix3::identity();
+    // (0..3).for_each(|i| {
+    //     (0..3).for_each(|j| {
+    //         assert_relative_eq!(m[(i, j)], exp[(i, j)], epsilon = 1e-10);
+    //     });
+    // });
+
+    // Calculate linearization of moment wrt destination translational displacement
+    let m = Matrix3::from_rows(
+        &(0..3)
+            .map(|i| {
+                let p = match i {
+                    0 => Vector3::new(perturb, 0., 0.),
+                    1 => Vector3::new(0., perturb, 0.),
+                    2 => Vector3::new(0., 0., perturb),
+                    _ => Vector3::zero(),
+                };
+
+                dst.copy_motion_from(&dst_ref);
+                dst.nodes[0].translate(p);
+                mapping.map_loads(&src, &mut dst);
+                let m_p = dst.nodes[0].m;
+
+                dst.copy_motion_from(&dst_ref);
+                dst.nodes[0].translate(-p);
+                mapping.map_loads(&src, &mut dst);
+                let m_m = dst.nodes[0].m;
+
+                (m_p - m_m) / (2. * perturb)
+            })
+            .collect_vec(),
+    );
+
+    println!("dM_D/dut_D = \n{}", m);
 }

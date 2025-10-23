@@ -379,3 +379,24 @@ impl std::ops::Mul<Vector3> for Matrix3 {
         }
     }
 }
+
+impl std::fmt::Display for Matrix3 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "[[{}, {}, {}]\n",
+            self.data[0][0], self.data[0][1], self.data[0][2]
+        )?;
+        write!(
+            f,
+            " [{}, {}, {}]\n",
+            self.data[1][0], self.data[1][1], self.data[1][2]
+        )?;
+        write!(
+            f,
+            " [{}, {}, {}]]",
+            self.data[2][0], self.data[2][1], self.data[2][2]
+        )?;
+        Ok(())
+    }
+}

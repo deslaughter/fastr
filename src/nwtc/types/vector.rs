@@ -336,6 +336,28 @@ impl std::ops::AddAssign for Vector3 {
     }
 }
 
+/// Implementation of in-place vector subtraction for Vector3.
+///
+/// Subtracts another vector from this vector, modifying this vector in place.
+///
+/// # Examples
+///
+/// ```
+/// use fastr::nwtc::Vector3;
+///
+/// let mut v1 = Vector3::new(5.0, 7.0, 9.0);
+/// let v2 = Vector3::new(1.0, 2.0, 3.0);
+/// v1 -= v2;
+/// assert_eq!(v1, Vector3::new(4.0, 5.0, 6.0));
+/// ```
+impl std::ops::SubAssign for Vector3 {
+    fn sub_assign(&mut self, other: Self) {
+        self.x -= other.x;
+        self.y -= other.y;
+        self.z -= other.z;
+    }
+}
+
 /// Implementation of scalar multiplication for Vector3.
 ///
 /// Multiplies all components of the vector by a scalar value.

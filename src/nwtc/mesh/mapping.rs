@@ -17,14 +17,12 @@ use crate::nwtc::Vector3;
 /// * `couple_arm` - The vector from destination to source element position
 /// * `shape_function` - Interpolation weights for multi-node elements (currently unused for point elements)
 pub struct ElementMapping {
-    /// The ID of the destination element in the target mesh
-    pub destination_elem_id: usize,
+    /// The ID of the element in the target mesh
+    pub elem_id: usize,
     /// The squared Euclidean distance between source and destination elements
     pub distance: f64,
     /// The vector from destination to source element position
     pub couple_arm: Vector3,
-    /// Interpolation weights for multi-node elements (currently unused for point elements)
-    pub shape_function: Vec<f64>,
 }
 
 /// A comprehensive mapping between two meshes for motion and load transfer.
@@ -44,13 +42,6 @@ pub struct Mapping {
     pub destination_id: usize,
     /// Mapping from source nodes to destination point elements
     point_to_point: Vec<ElementMapping>,
-    // Future mapping types (currently commented out):
-    // /// Mapping from source line elements to destination point elements
-    // line2_to_point: Vec<ElementMapping>,
-    // /// Mapping from source nodes to destination line elements
-    // point_to_line2: Vec<ElementMapping>,
-    // /// Mapping from source line elements to destination line elements
-    // line2_to_line2: Vec<ElementMapping>,
 }
 
 impl Mapping {
@@ -76,7 +67,7 @@ impl Mapping {
     /// 2. For each source node, finds the nearest destination point element
     /// 3. Stores the mapping relationship with distance and coupling arm information
     ///
-    pub fn new(source: &Mesh, destination: &Mesh) -> Self {
+    pub fn new_motion(source: &Mesh, destination: &Mesh) -> Self {
         // Build KD-tree for efficient spatial searching of destination elements
         let mut kdtree: kiddo::float::kdtree::KdTree<f64, usize, 3, 32, u32> =
             KdTree::with_capacity(destination.nodes.len());
@@ -114,18 +105,83 @@ impl Mapping {
                         _ => panic!("Mapped element is not a point element"),
                     };
                     ElementMapping {
-                        destination_elem_id,
+                        elem_id: destination_elem_id,
                         distance: nearest_node.distance,
                         // Calculate coupling arm from destination to source
                         couple_arm: destination.nodes[destination_node_id].x0 - node_source.x0,
-                        shape_function: Vec::new(), // Not used for point-to-point mapping
                     }
                 })
                 .collect(),
-            // Future mapping types (currently not implemented):
-            // line2_to_point: Vec::new(),
-            // point_to_line2: Vec::new(),
-            // line2_to_line2: Vec::new(),
+        }
+    }
+
+    /// Creates a new mesh load mapping between source and destination meshes.
+    ///
+    /// This constructor builds spatial relationships between the meshes using
+    /// a KD-tree for efficient nearest neighbor searches. Currently supports
+    /// point-to-point mapping where each source node is mapped to the nearest
+    /// destination point element.
+    ///
+    /// # Arguments
+    ///
+    /// * `source` - The source mesh containing elements that will drive the motion
+    /// * `destination` - The destination mesh that will receive the transferred motion
+    ///
+    /// # Returns
+    ///
+    /// A new `MeshMapping` instance with established element relationships
+    ///
+    /// # Algorithm
+    ///
+    /// 1. Builds a KD-tree from all point elements in the source mesh
+    /// 2. For each destination node, finds the nearest source point element
+    /// 3. Stores the mapping relationship with distance and coupling arm information
+    ///
+    pub fn new_load(source: &Mesh, destination: &Mesh) -> Self {
+        // Build KD-tree for efficient spatial searching of source elements
+        let mut kdtree: kiddo::float::kdtree::KdTree<f64, usize, 3, 32, u32> =
+            KdTree::with_capacity(source.nodes.len());
+
+        // Add unique source elements to the kd-tree
+        // Filter for point elements only and ensure uniqueness by node ID
+        source
+            .elements
+            .iter()
+            .enumerate()
+            .filter_map(|(elem_id, e)| match e {
+                Element::Point(node_id) => Some((elem_id, node_id)),
+                _ => None,
+            })
+            .unique_by(|(_, &node_id)| node_id)
+            .for_each(|(elem_id, &node_id)| {
+                kdtree.add(&source.nodes[node_id].x0.to_array(), elem_id);
+            });
+
+        Self {
+            source_id: source.id,
+            destination_id: destination.id,
+            // Create point-to-point mappings for all source nodes
+            point_to_point: destination
+                .nodes
+                .iter()
+                .map(|node_destination| {
+                    // Find the nearest source point element
+                    let nearest_node =
+                        kdtree.nearest_one::<SquaredEuclidean>(&node_destination.x0.to_array());
+                    let source_elem_id = nearest_node.item;
+                    let source_elem = &source.elements[source_elem_id];
+                    let source_node_id = match source_elem {
+                        Element::Point(nid) => *nid,
+                        _ => panic!("Mapped element is not a point element"),
+                    };
+                    ElementMapping {
+                        elem_id: source_elem_id,
+                        distance: nearest_node.distance,
+                        // Calculate coupling arm from source to source
+                        couple_arm: source.nodes[source_node_id].x0 - node_destination.x0,
+                    }
+                })
+                .collect(),
         }
     }
 
@@ -154,14 +210,17 @@ impl Mapping {
     /// **Acceleration:**
     /// - `a_d = a_s + p × α_s + ω_s × (p × ω_s)` including centripetal acceleration
     ///
-    pub fn map_motion(&self, source: &Mesh, destination: &mut Mesh) {
+    pub fn transfer_motion(&self, source: &Mesh, destination: &mut Mesh) {
         // Map point-to-point motions
         self.point_to_point
             .iter()
             .enumerate()
             .for_each(|(source_node_id, mapping)| {
+                // Get the source node
                 let node_s = &source.nodes[source_node_id];
-                match &destination.elements[mapping.destination_elem_id] {
+
+                // Get the destination node
+                match &destination.elements[mapping.elem_id] {
                     Element::Point(destination_node_id) => {
                         let node_d = &mut destination.nodes[*destination_node_id];
 
@@ -199,31 +258,29 @@ impl Mapping {
             });
     }
 
-    pub fn map_loads(&self, source: &Mesh, destination: &mut Mesh) {
-        // Map point-to-point loads
+    pub fn transfer_loads(&self, source: &Mesh, destination: &mut Mesh) {
+        // Loop through point-to-point mappings
         self.point_to_point
             .iter()
             .enumerate()
-            .for_each(|(source_node_id, mapping)| {
-                let node_s = &source.nodes[source_node_id];
-                match &destination.elements[mapping.destination_elem_id] {
-                    Element::Point(destination_node_id) => {
-                        let node_d = &mut destination.nodes[*destination_node_id];
+            .for_each(|(destination_node_id, mapping)| {
+                // Get mutable reference to destination node
+                let node_d = &mut destination.nodes[destination_node_id];
 
-                        // Initial position vector from source to destination
-                        let p0 = node_d.x0 - node_s.x0;
-
-                        // Current position vector from source to destination (rotated)
-                        let p = node_s.ur.rotate_vector(&p0);
+                // Get the source element
+                match &source.elements[mapping.elem_id] {
+                    Element::Point(source_node_id) => {
+                        // Get the source node
+                        let node_s = &source.nodes[*source_node_id];
 
                         // Map forces directly
                         node_d.f += node_s.f;
 
-                        // Calculate moment arm in current configuration
-                        let moment_arm = node_s.ur.rotate_vector(&p);
+                        // Current vector from destination to source
+                        let p = node_d.x() - node_s.x();
 
                         // Map moments including couple from force at offset point
-                        node_d.m += node_s.m + moment_arm.cross(&node_s.f);
+                        node_d.m += node_s.m + p.cross(&node_s.f);
                     }
                     _ => panic!("Mapped element is not a point element"),
                 }
@@ -238,7 +295,7 @@ mod tests {
     use approx::assert_relative_eq;
     use std::f64::consts::FRAC_PI_2;
 
-    fn create_test_meshes_and_mappings() -> (Mesh, Mesh, Mapping) {
+    fn create_test_meshes() -> (Mesh, Mesh) {
         // Create source mesh with 1 nodes
         let mut mb = MeshBuilder::new();
         let nid = mb
@@ -259,14 +316,15 @@ mod tests {
         mb.add_point_element(nid);
         let mesh_destination = mb.build();
 
-        let mapping = Mapping::new(&mesh_source, &mesh_destination);
-
-        (mesh_source, mesh_destination, mapping)
+        (mesh_source, mesh_destination)
     }
 
     #[test]
     fn test_mapping_creation() {
-        let (source, destination, mapping) = create_test_meshes_and_mappings();
+        let (source, destination) = create_test_meshes();
+
+        // Create mapping
+        let mapping = Mapping::new_motion(&source, &destination);
 
         assert_eq!(mapping.source_id, source.id);
         assert_eq!(mapping.destination_id, destination.id);
@@ -281,13 +339,14 @@ mod tests {
 
     #[test]
     fn test_map_motion_translational() {
-        let (mut source, mut destination, mapping) = create_test_meshes_and_mappings();
+        let (mut source, mut destination) = create_test_meshes();
 
         // Apply displacement to source mesh
         source.nodes[0].translate(Vector3::new(0.5, 0.3, 0.2));
 
         // Create mapping and transfer motion
-        mapping.map_motion(&source, &mut destination);
+        let mapping = Mapping::new_motion(&source, &destination);
+        mapping.transfer_motion(&source, &mut destination);
 
         // Check if displacement was properly transferred
         assert_relative_eq!(destination.nodes[0].ut.x, 0.5, epsilon = 1e-10);
@@ -297,13 +356,14 @@ mod tests {
 
     #[test]
     fn test_map_motion_rotational() {
-        let (mut source, mut destination, mapping) = create_test_meshes_and_mappings();
+        let (mut source, mut destination) = create_test_meshes();
 
         // Apply rotation to source mesh
         source.nodes[0].rotate(Quaternion::from_vector(Vector3::new(0.0, 0.0, FRAC_PI_2)));
 
         // Create mapping and transfer motion
-        mapping.map_motion(&source, &mut destination);
+        let mapping = Mapping::new_motion(&source, &destination);
+        mapping.transfer_motion(&source, &mut destination);
 
         // Check if rotation was properly transferred
         assert_relative_eq!(
@@ -335,14 +395,15 @@ mod tests {
 
     #[test]
     fn test_map_velocities() {
-        let (mut source, mut destination, mapping) = create_test_meshes_and_mappings();
+        let (mut source, mut destination) = create_test_meshes();
 
         // Apply velocities to source mesh
         source.nodes[0].vt = Vector3::new(1.0, 2.0, 3.0);
         source.nodes[0].vr = Vector3::new(0.0, 0.0, 2.0); // Angular velocity around z-axis
 
         // Transfer motion
-        mapping.map_motion(&source, &mut destination);
+        let mapping = Mapping::new_motion(&source, &destination);
+        mapping.transfer_motion(&source, &mut destination);
 
         // Check linear velocity: v_d = v_s + p × ω_s
         // p = [1, 0, 0], ω = [0, 0, 2]
@@ -359,14 +420,15 @@ mod tests {
 
     #[test]
     fn test_map_loads() {
-        let (mut source, mut destination, mapping) = create_test_meshes_and_mappings();
+        let (mut source, mut destination) = create_test_meshes();
 
         // Apply forces and moments to source mesh
         source.nodes[0].f = Vector3::new(10.0, 20.0, 30.0);
         source.nodes[0].m = Vector3::new(5.0, 6.0, 7.0);
 
         // Transfer loads
-        mapping.map_loads(&source, &mut destination);
+        let mapping = Mapping::new_load(&source, &destination);
+        mapping.transfer_loads(&source, &mut destination);
 
         // Check force transfer
         assert_relative_eq!(destination.nodes[0].f.x, 10.0, epsilon = 1e-10);

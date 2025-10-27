@@ -234,6 +234,14 @@ impl Matrix3 {
             ],
         }
     }
+
+    pub fn into_faer(self) -> faer::Mat<f64> {
+        faer::mat![
+            [self.data[0][0], self.data[0][1], self.data[0][2]],
+            [self.data[1][0], self.data[1][1], self.data[1][2]],
+            [self.data[2][0], self.data[2][1], self.data[2][2]],
+        ]
+    }
 }
 
 /// Implementation of matrix subtraction for Matrix3.

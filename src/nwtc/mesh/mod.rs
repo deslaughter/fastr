@@ -80,8 +80,12 @@ impl Mesh {
         self
     }
 
-    pub fn create_mapping(&self, destination: &Mesh) -> Mapping {
-        Mapping::new(self, destination)
+    pub fn create_motion_mapping(&self, destination: &Mesh) -> Mapping {
+        Mapping::new_motion(self, destination)
+    }
+
+    pub fn create_load_mapping(&self, destination: &Mesh) -> Mapping {
+        Mapping::new_load(self, destination)
     }
 
     pub fn to_vtk(&self) -> Vtk {

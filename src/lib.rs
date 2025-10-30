@@ -1,4 +1,4 @@
-pub mod nwtc;
+pub mod core;
 
 pub struct Var {
     pub name: String,

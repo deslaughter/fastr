@@ -1,4 +1,4 @@
-use crate::nwtc::Matrix3;
+use crate::core::Matrix3;
 
 /// A 3D vector for 3D linear algebra operations.
 ///
@@ -9,7 +9,7 @@ use crate::nwtc::Matrix3;
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Vector3;
+/// use fastr::core::Vector3;
 ///
 /// // Create a new vector
 /// let v1 = Vector3::new(1.0, 2.0, 3.0);
@@ -43,7 +43,7 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Vector3;
     ///
     /// let vector = Vector3::new(1.0, 2.0, 3.0);
     /// assert_eq!(vector.x, 1.0);
@@ -59,7 +59,7 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Vector3;
     ///
     /// let zero = Vector3::zero();
     /// assert_eq!(zero.x, 0.0);
@@ -85,7 +85,7 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Vector3;
     ///
     /// let vector = Vector3::new(3.0, 4.0, 0.0);
     /// assert_eq!(vector.norm(), 5.0);
@@ -106,7 +106,7 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Vector3;
     ///
     /// let vector = Vector3::new(3.0, 4.0, 0.0);
     /// let unit = vector.unit();
@@ -134,7 +134,7 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Vector3;
     ///
     /// let vector = Vector3::new(1.0, 2.0, 3.0);
     /// let array = vector.to_array();
@@ -157,7 +157,7 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Vector3;
     ///
     /// let array = [1.0, 2.0, 3.0];
     /// let vector = Vector3::from_array(array);
@@ -186,7 +186,7 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Vector3;
     ///
     /// let v1 = Vector3::new(1.0, 2.0, 3.0);
     /// let v2 = Vector3::new(4.0, 5.0, 6.0);
@@ -213,7 +213,7 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Vector3;
     ///
     /// let v1 = Vector3::new(1.0, 0.0, 0.0);
     /// let v2 = Vector3::new(0.0, 1.0, 0.0);
@@ -247,7 +247,7 @@ impl Vector3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Vector3;
     ///
     /// let v = Vector3::new(1.0, 2.0, 3.0);
     /// let skew = v.skew_symmetric();
@@ -269,7 +269,7 @@ impl Vector3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Vector3;
+/// use fastr::core::Vector3;
 ///
 /// let v1 = Vector3::new(1.0, 2.0, 3.0);
 /// let v2 = Vector3::new(4.0, 5.0, 6.0);
@@ -295,7 +295,7 @@ impl std::ops::Add for Vector3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Vector3;
+/// use fastr::core::Vector3;
 ///
 /// let v1 = Vector3::new(5.0, 7.0, 9.0);
 /// let v2 = Vector3::new(1.0, 2.0, 3.0);
@@ -321,7 +321,7 @@ impl std::ops::Sub for Vector3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Vector3;
+/// use fastr::core::Vector3;
 ///
 /// let mut v1 = Vector3::new(1.0, 2.0, 3.0);
 /// let v2 = Vector3::new(4.0, 5.0, 6.0);
@@ -343,7 +343,7 @@ impl std::ops::AddAssign for Vector3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Vector3;
+/// use fastr::core::Vector3;
 ///
 /// let mut v1 = Vector3::new(5.0, 7.0, 9.0);
 /// let v2 = Vector3::new(1.0, 2.0, 3.0);
@@ -365,7 +365,7 @@ impl std::ops::SubAssign for Vector3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Vector3;
+/// use fastr::core::Vector3;
 ///
 /// let vector = Vector3::new(1.0, 2.0, 3.0);
 /// let scaled = vector * 2.0;
@@ -390,7 +390,7 @@ impl std::ops::Mul<f64> for Vector3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Vector3;
+/// use fastr::core::Vector3;
 ///
 /// let vector = Vector3::new(2.0, 4.0, 6.0);
 /// let scaled = vector / 2.0;
@@ -415,7 +415,7 @@ impl std::ops::Div<f64> for Vector3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Vector3;
+/// use fastr::core::Vector3;
 ///
 /// let vector = Vector3::new(1.0, -2.0, 3.0);
 /// let negated = -vector;
@@ -444,8 +444,8 @@ impl std::ops::Neg for Vector3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Vector3;
-/// use fastr::nwtc::Matrix3;
+/// use fastr::core::Vector3;
+/// use fastr::core::Matrix3;
 ///
 /// let vector = Vector3::new(1.0, 2.0, 3.0);
 /// let matrix = Matrix3::identity();

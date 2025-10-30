@@ -1,4 +1,4 @@
-use crate::nwtc::{Quaternion, Vector3};
+use crate::core::{Quaternion, Vector3};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Node {

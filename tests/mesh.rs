@@ -4,10 +4,10 @@ use std::{f64::consts::PI, fs};
 
 use approx::assert_relative_eq;
 use faer::prelude::*;
-use fastr::nwtc::{Matrix3, MeshBuilder, Quaternion, Vector3};
+use fastr::core::{Matrix3, MeshBuilder, Quaternion, Vector3};
 use itertools::Itertools;
 
-fn build_point_mesh_at(x: f64, y: f64, z: f64) -> fastr::nwtc::mesh::Mesh {
+fn build_point_mesh_at(x: f64, y: f64, z: f64) -> fastr::core::mesh::Mesh {
     let mut mb = MeshBuilder::new();
     let node_id = mb
         .add_node()

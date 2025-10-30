@@ -1,4 +1,4 @@
-use crate::nwtc::vector::Vector3;
+use crate::core::vector::Vector3;
 
 /// A 3x3 matrix for 3D linear algebra operations.
 ///
@@ -8,7 +8,7 @@ use crate::nwtc::vector::Vector3;
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Matrix3;
+/// use fastr::core::Matrix3;
 ///
 /// // Create an identity matrix
 /// let identity = Matrix3::identity();
@@ -36,7 +36,7 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Matrix3;
+    /// use fastr::core::Matrix3;
     ///
     /// let matrix = Matrix3::new([
     ///     [1.0, 0.0, 0.0],
@@ -55,7 +55,7 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Matrix3;
+    /// use fastr::core::Matrix3;
     ///
     /// let identity = Matrix3::identity();
     /// assert_eq!(identity.get(0, 0), 1.0);
@@ -82,7 +82,7 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Matrix3;
+    /// use fastr::core::Matrix3;
     ///
     /// let matrix = Matrix3::identity();
     /// assert_eq!(matrix.get(0, 0), 1.0);
@@ -105,7 +105,7 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Matrix3;
+    /// use fastr::core::Matrix3;
     ///
     /// let matrix = Matrix3::identity();
     /// let first_column = matrix.column(0);
@@ -128,7 +128,7 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Matrix3;
+    /// use fastr::core::Matrix3;
     ///
     /// let matrix = Matrix3::identity();
     /// let first_row = matrix.row(0);
@@ -151,7 +151,7 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::{Matrix3, Vector3};
+    /// use fastr::core::{Matrix3, Vector3};
     ///
     /// let rows = [
     ///     Vector3::new(1.0, 2.0, 3.0),
@@ -184,7 +184,7 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::{Matrix3, Vector3};
+    /// use fastr::core::{Matrix3, Vector3};
     ///
     /// let columns = [
     ///     Vector3::new(1.0, 4.0, 7.0),
@@ -215,7 +215,7 @@ impl Matrix3 {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Matrix3;
+    /// use fastr::core::Matrix3;
     ///
     /// let matrix = Matrix3::new([
     ///     [1.0, 2.0, 3.0],
@@ -251,7 +251,7 @@ impl Matrix3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Matrix3;
+/// use fastr::core::Matrix3;
 ///
 /// let a = Matrix3::identity();
 /// let b = Matrix3::identity();
@@ -290,7 +290,7 @@ impl std::ops::Sub for Matrix3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Matrix3;
+/// use fastr::core::Matrix3;
 ///
 /// let matrix = Matrix3::identity();
 /// let value = matrix[(0, 0)]; // Gets the element at row 0, column 0
@@ -311,7 +311,7 @@ impl std::ops::Index<(usize, usize)> for Matrix3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Matrix3;
+/// use fastr::core::Matrix3;
 ///
 /// let matrix = Matrix3::identity();
 /// let negated = -matrix;
@@ -339,7 +339,7 @@ impl std::ops::Neg for Matrix3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Matrix3;
+/// use fastr::core::Matrix3;
 ///
 /// let a = Matrix3::identity();
 /// let b = Matrix3::identity();
@@ -370,7 +370,7 @@ impl std::ops::Mul<Matrix3> for Matrix3 {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::{Matrix3, Vector3};
+/// use fastr::core::{Matrix3, Vector3};
 ///
 /// let matrix = Matrix3::identity();
 /// let vector = Vector3::new(1.0, 2.0, 3.0);

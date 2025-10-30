@@ -1,8 +1,8 @@
 use itertools::Itertools;
 use kiddo::{float::kdtree::KdTree, SquaredEuclidean};
 
-use crate::nwtc::mesh::{Element, Mesh};
-use crate::nwtc::Vector3;
+use crate::core::mesh::{Element, Mesh};
+use crate::core::Vector3;
 
 /// Represents a mapping between elements in different meshes.
 ///
@@ -291,7 +291,7 @@ impl Mapping {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::nwtc::{MeshBuilder, Quaternion};
+    use crate::core::{MeshBuilder, Quaternion};
     use approx::assert_relative_eq;
     use std::f64::consts::FRAC_PI_2;
 

@@ -1,4 +1,4 @@
-use crate::nwtc::{matrix::Matrix3, vector::Vector3};
+use crate::core::{matrix::Matrix3, vector::Vector3};
 
 // https://academicflight.com/articles/kinematics/rotation-formalisms/rotation-matrix/
 // Quaternions represent a rotation from body-fixed frame to inertial frame
@@ -19,8 +19,8 @@ use crate::nwtc::{matrix::Matrix3, vector::Vector3};
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::Quaternion;
-/// use fastr::nwtc::Vector3;
+/// use fastr::core::Quaternion;
+/// use fastr::core::Vector3;
 /// use std::f64::consts::PI;
 ///
 /// // Create identity quaternion (no rotation)
@@ -59,7 +59,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
+    /// use fastr::core::Quaternion;
     ///
     /// let q = Quaternion::new(1.0, 0.0, 0.0, 0.0); // Identity quaternion
     /// ```
@@ -74,8 +74,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Quaternion;
+    /// use fastr::core::Vector3;
     /// let identity = Quaternion::identity();
     /// let vector = Vector3::new(1.0, 2.0, 3.0);
     /// let rotated = identity.rotate_vector(&vector);
@@ -100,7 +100,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
+    /// use fastr::core::Quaternion;
     ///
     /// let q = Quaternion::from_array([1.0, 0.0, 0.0, 0.0]);
     /// assert_eq!(q.w, Quaternion::identity().w);
@@ -127,7 +127,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
+    /// use fastr::core::Quaternion;
     ///
     /// let q = Quaternion::new(1.0, 2.0, 3.0, 4.0);
     /// let arr = q.to_array();
@@ -150,7 +150,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
+    /// use fastr::core::Quaternion;
     ///
     /// let q = Quaternion::identity();
     /// assert_eq!(q.norm(), 1.0);
@@ -173,7 +173,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
+    /// use fastr::core::Quaternion;
     ///
     /// let q = Quaternion::new(2.0, 0.0, 0.0, 0.0);
     /// let normalized = q.normalize();
@@ -206,7 +206,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
+    /// use fastr::core::Quaternion;
     ///
     /// let q = Quaternion::new(0.7071, 0.7071, 0.0, 0.0); // 90° around X
     /// let q_inv = q.inverse();
@@ -238,8 +238,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Quaternion;
+    /// use fastr::core::Vector3;
     /// use std::f64::consts::PI;
     ///
     /// let q1 = Quaternion::from_vector(Vector3::new(PI/2., 0.0, 0.0)); // 90° around X
@@ -272,8 +272,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Quaternion;
+    /// use fastr::core::Vector3;
     /// use std::f64::consts::PI;
     ///
     /// let q = Quaternion::from_vector(Vector3::new(0.0, 0.0, PI/2.)); // 90° around Z
@@ -304,7 +304,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::{Quaternion, Vector3};
+    /// use fastr::core::{Quaternion, Vector3};
     /// use std::f64::consts::PI;
     ///
     /// let rotation_vector = Vector3::new(PI/2., 0.0, 0.0); // 90° around X-axis
@@ -338,7 +338,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
+    /// use fastr::core::Quaternion;
     ///
     /// let q = Quaternion::new(0.7071, 0.7071, 0.0, 0.0); // 90° around X
     /// let rotation_vector = q.to_vector();
@@ -377,7 +377,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::{Matrix3, Quaternion};
+    /// use fastr::core::{Matrix3, Quaternion};
     ///
     /// // 90° rotation around Z-axis
     /// let matrix = Matrix3::new([
@@ -437,8 +437,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Quaternion;
+    /// use fastr::core::Vector3;
     /// use std::f64::consts::PI;
     ///
     /// let q = Quaternion::from_vector(Vector3::new(0.0, 0.0, PI/2.)); // 90° around Z
@@ -484,7 +484,7 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
+    /// use fastr::core::Quaternion;
     ///
     /// let q1 = Quaternion::identity();
     /// let q2 = Quaternion::identity();
@@ -512,8 +512,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Quaternion;
+    /// use fastr::core::Vector3;
     /// use std::f64::consts::PI;
     ///
     /// let q1 = Quaternion::identity();
@@ -547,8 +547,8 @@ impl Quaternion {
     /// # Examples
     ///
     /// ```
-    /// use fastr::nwtc::Quaternion;
-    /// use fastr::nwtc::Vector3;
+    /// use fastr::core::Quaternion;
+    /// use fastr::core::Vector3;
     /// use std::f64::consts::PI;
     ///
     /// let q1 = Quaternion::identity();
@@ -614,7 +614,7 @@ impl Quaternion {
 /// # Examples
 ///
 /// ```
-/// use fastr::nwtc::{Quaternion, Vector3};
+/// use fastr::core::{Quaternion, Vector3};
 /// use std::f64::consts::PI;
 ///
 /// let q1 = Quaternion::from_vector(Vector3::new(PI/4., 0.0, 0.0));

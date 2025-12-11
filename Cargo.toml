@@ -8,6 +8,8 @@ name = "fastr"
 path = "src/lib.rs"
 
 [dependencies]
+anyerror = "0.1.13"
+anyhow = "1.0.100"
 approx = "0.5.1"
 bitflags = "2.10.0"
 faer = "0.22.6"

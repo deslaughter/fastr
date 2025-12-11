@@ -138,6 +138,14 @@ impl Quaternion {
         [self.w, self.x, self.y, self.z]
     }
 
+    pub fn copy_from_slice(&mut self, slice: &[f64]) {
+        assert!(slice.len() >= 4);
+        self.w = slice[0];
+        self.x = slice[1];
+        self.y = slice[2];
+        self.z = slice[3];
+    }
+
     /// Calculates the norm (magnitude) of the quaternion.
     ///
     /// The norm is calculated as √(w² + x² + y² + z²).

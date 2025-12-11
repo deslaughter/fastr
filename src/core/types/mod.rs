@@ -2,6 +2,6 @@ pub mod matrix;
 pub mod quaternion;
 pub mod vector;
 
-pub use matrix::*;
-pub use quaternion::*;
-pub use vector::*;
+pub use matrix::Matrix3;
+pub use quaternion::Quaternion;
+pub use vector::Vector3;

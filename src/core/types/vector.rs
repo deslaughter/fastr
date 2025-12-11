@@ -171,6 +171,13 @@ impl Vector3 {
         }
     }
 
+    pub fn copy_from_slice(&mut self, slice: &[f64]) {
+        assert!(slice.len() >= 3);
+        self.x = slice[0];
+        self.y = slice[1];
+        self.z = slice[2];
+    }
+
     /// Calculates the dot product with another vector.
     ///
     /// The dot product is calculated as x₁x₂ + y₁y₂ + z₁z₂.

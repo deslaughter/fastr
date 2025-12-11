@@ -1,23 +1,25 @@
-use crate::core::mesh::{Element, Mesh, Node};
+use super::{Element, Fields, Mesh, Node};
 use crate::core::{Quaternion, Vector3};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-fn get_id() -> usize {
+pub fn get_id() -> usize {
     static COUNTER: AtomicUsize = AtomicUsize::new(1);
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
 
-pub struct MeshBuilder {
+pub struct Builder {
     mesh: Mesh,
 }
 
-impl MeshBuilder {
+impl Builder {
     pub fn new() -> Self {
         Self {
             mesh: Mesh {
-                id: get_id(),
+                id: 0,
+                fields: Fields::empty(),
                 nodes: Vec::new(),
                 elements: Vec::new(),
+                siblings: Vec::new(),
             },
         }
     }
@@ -48,7 +50,10 @@ impl MeshBuilder {
     }
 
     pub fn build(self) -> Mesh {
-        self.mesh.clone()
+        Mesh {
+            id: get_id(),
+            ..self.mesh
+        }
     }
 }
 

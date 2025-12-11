@@ -1,4 +1,6 @@
 pub mod core;
+pub mod glue;
+pub mod modules;
 
 pub struct Var {
     pub name: String,

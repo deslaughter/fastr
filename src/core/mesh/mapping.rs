@@ -247,8 +247,8 @@ impl Mapping {
                         // Map translational acceleration
                         // a_d = a_s + p × α_s + ω_s × (p × ω_s)
                         // Includes both angular acceleration and centripetal acceleration terms
-                        node_d.ax =
-                            node_s.ax + p.cross(&node_s.ar) + node_s.vr.cross(&node_s.vr.cross(&p));
+                        node_d.at =
+                            node_s.at + p.cross(&node_s.ar) + node_s.vr.cross(&node_s.vr.cross(&p));
 
                         // Map rotational acceleration (rigid body assumption)
                         node_d.ar = node_s.ar;
@@ -291,13 +291,13 @@ impl Mapping {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{MeshBuilder, Quaternion};
+    use crate::core::{mesh, Quaternion};
     use approx::assert_relative_eq;
     use std::f64::consts::FRAC_PI_2;
 
     fn create_test_meshes() -> (Mesh, Mesh) {
         // Create source mesh with 1 nodes
-        let mut mb = MeshBuilder::new();
+        let mut mb = mesh::Builder::new();
         let nid = mb
             .add_node()
             .set_position(0.0, 0.0, 0.0)
@@ -307,7 +307,7 @@ mod tests {
         let mesh_source = mb.build();
 
         // Create destination mesh with 1 nodes slightly offset
-        let mut mb = MeshBuilder::new();
+        let mut mb = mesh::Builder::new();
         let nid = mb
             .add_node()
             .set_position(1.0, 0.0, 0.0)

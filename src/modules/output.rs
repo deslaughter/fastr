@@ -1,13 +1,12 @@
-use itertools::Itertools;
-
 use crate::{
+    core::types::*,
     core::{mesh::Fields, Mesh},
     modules::InputOutputVar,
 };
 
 use std::collections::{HashMap, HashSet};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Output {
     meshes: HashMap<usize, Mesh>,
 }
@@ -117,7 +116,7 @@ pub fn extrapolate_interpolate(time: f64, times: &[f64], io_data: &[Output], u: 
 
         // Normalize quaternions in the destination mesh
         dest_mesh.nodes.iter_mut().for_each(|node| {
-            node.ur.normalize();
+            node.ur = node.ur.normalize();
         });
 
         // Unpack the accumulated data back into the destination mesh

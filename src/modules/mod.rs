@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::core::types::*;
 use faer::prelude::*;
 
 use crate::core::{mesh::Fields, Mesh};
@@ -18,7 +19,7 @@ pub enum StateIndex {
     Previous,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ModuleId {
     None,
     Glue,
@@ -32,7 +33,7 @@ pub enum ModuleId {
     MoorDyn,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StateType {
     TranslationalDisplacement,
     TranslationalVelocity,
@@ -72,7 +73,7 @@ pub struct ModuleData {
     pub dudy: Mat<f64>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ModuleVars {
     nx: usize,
     pub x: Vec<StateVar>,
@@ -157,7 +158,7 @@ impl ModuleVars {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct StateVar {
     pub name: String,
     pub module_id: ModuleId,
@@ -189,7 +190,7 @@ impl StateVar {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputOutputVar {
     pub name: String,
     pub module_id: ModuleId,

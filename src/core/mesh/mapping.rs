@@ -1,8 +1,9 @@
+use crate::core::types::*;
+
 use itertools::Itertools;
 use kiddo::{float::kdtree::KdTree, SquaredEuclidean};
 
 use crate::core::mesh::{Element, Mesh};
-use crate::core::Vector3;
 
 /// Represents a mapping between elements in different meshes.
 ///
@@ -228,18 +229,18 @@ impl Mapping {
                         let p0 = node_d.x0 - node_s.x0;
 
                         // Current position vector from source to destination (rotated)
-                        let p = node_s.ur.rotate_vector(&p0);
+                        let p = node_s.ur * p0;
 
                         // Map translational displacement
                         // u_d = u_s + (p0 - R*p0) accounts for rotation of the coupling arm
-                        node_d.ut = node_s.ut + node_s.ur.rotate_vector(&p0) - p0;
+                        node_d.ut = node_s.ut + node_s.ur * p0 - p0;
 
                         // Map rotational displacement (rigid body assumption)
                         node_d.ur = node_s.ur;
 
                         // Map translational velocity
                         // v_d = v_s + p × ω_s (velocity due to rotation at offset point)
-                        node_d.vt = node_s.vt + node_s.vr.cross(&p);
+                        node_d.vt = node_s.vt + node_s.vr.cross(p);
 
                         // Map rotational velocity (rigid body assumption)
                         node_d.vr = node_s.vr;
@@ -248,7 +249,7 @@ impl Mapping {
                         // a_d = a_s + p × α_s + ω_s × (p × ω_s)
                         // Includes both angular acceleration and centripetal acceleration terms
                         node_d.at =
-                            node_s.at + p.cross(&node_s.ar) + node_s.vr.cross(&node_s.vr.cross(&p));
+                            node_s.at + p.cross(node_s.ar) + node_s.vr.cross(node_s.vr.cross(p));
 
                         // Map rotational acceleration (rigid body assumption)
                         node_d.ar = node_s.ar;
@@ -280,7 +281,7 @@ impl Mapping {
                         let p = node_d.x() - node_s.x();
 
                         // Map moments including couple from force at offset point
-                        node_d.m += node_s.m + p.cross(&node_s.f);
+                        node_d.m += node_s.m + p.cross(node_s.f);
                     }
                     _ => panic!("Mapped element is not a point element"),
                 }
@@ -291,7 +292,7 @@ impl Mapping {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::{mesh, Quaternion};
+    use crate::core::mesh;
     use approx::assert_relative_eq;
     use std::f64::consts::FRAC_PI_2;
 
@@ -301,7 +302,7 @@ mod tests {
         let nid = mb
             .add_node()
             .set_position(0.0, 0.0, 0.0)
-            .set_orientation(Quaternion::identity())
+            .set_orientation(Quaternion::IDENTITY)
             .build();
         mb.add_point_element(nid);
         let mesh_source = mb.build();
@@ -311,7 +312,7 @@ mod tests {
         let nid = mb
             .add_node()
             .set_position(1.0, 0.0, 0.0)
-            .set_orientation(Quaternion::identity())
+            .set_orientation(Quaternion::IDENTITY)
             .build();
         mb.add_point_element(nid);
         let mesh_destination = mb.build();
@@ -359,7 +360,7 @@ mod tests {
         let (mut source, mut destination) = create_test_meshes();
 
         // Apply rotation to source mesh
-        source.nodes[0].rotate(Quaternion::from_vector(Vector3::new(0.0, 0.0, FRAC_PI_2)));
+        source.nodes[0].rotate(Quaternion::from_rotation_z(FRAC_PI_2));
 
         // Create mapping and transfer motion
         let mapping = Mapping::new_motion(&source, &destination);

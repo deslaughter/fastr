@@ -89,6 +89,9 @@ name = "bitflags"
 version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "812e12b5285cc515a9c72a5c1d3b6d46a19dac5acfef5265968c166106e31dd3"
+dependencies = [
+ "serde_core",
+]
 
 [[package]]
 name = "block-buffer"
@@ -401,9 +404,11 @@ dependencies = [
  "approx",
  "bitflags",
  "faer",
+ "glam",
  "itertools 0.14.0",
  "kiddo",
  "ndarray",
+ "serde",
  "thiserror 2.0.12",
  "vtkio",
 ]
@@ -588,6 +593,15 @@ dependencies = [
  "cfg-if",
  "libc",
  "wasi",
+]
+
+[[package]]
+name = "glam"
+version = "0.30.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd47b05dddf0005d850e5644cae7f2b14ac3df487979dbfff3b56f20b1a6ae46"
+dependencies = [
+ "serde_core",
 ]
 
 [[package]]
@@ -1292,18 +1306,28 @@ checksum = "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc"
 
 [[package]]
 name = "serde"
-version = "1.0.219"
+version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f0e2c6ed6606019b4e29e69dbaba95b11854410e5347d525002456dbbb786b6"
+checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
+dependencies = [
+ "serde_core",
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_core"
+version = "1.0.228"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.219"
+version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b0276cf7f2c73365f7157c8123c21cd9a50fbbd844757af28ca1f5925fc2a00"
+checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
 dependencies = [
  "proc-macro2",
  "quote",

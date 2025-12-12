@@ -1,5 +1,6 @@
+use crate::core::types::*;
+
 use super::{Element, Fields, Mesh, Node};
-use crate::core::{Quaternion, Vector3};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub fn get_id() -> usize {
@@ -27,8 +28,8 @@ impl Builder {
     pub fn add_node(&mut self) -> NodeBuilder<'_> {
         self.mesh.nodes.push(Node::new(
             self.mesh.nodes.len(),
-            Vector3::zero(),
-            Quaternion::identity(),
+            Vector3::ZERO,
+            Quaternion::IDENTITY,
         ));
         NodeBuilder {
             node: self.mesh.nodes.last_mut().unwrap(),
@@ -84,7 +85,7 @@ impl<'a> NodeBuilder<'a> {
 
     pub fn rotate_about_point(self, q: Quaternion, point: Vector3) -> Self {
         self.node.r0 = q * self.node.r0;
-        let rotated_x0 = q.rotate_vector(&(self.node.x0 - point));
+        let rotated_x0 = q * (self.node.x0 - point);
         self.node.x0 = rotated_x0 + point;
         self
     }

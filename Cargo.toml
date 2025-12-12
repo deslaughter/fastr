@@ -11,10 +11,12 @@ path = "src/lib.rs"
 anyerror = "0.1.13"
 anyhow = "1.0.100"
 approx = "0.5.1"
-bitflags = "2.10.0"
+bitflags = { version = "2.10.0", features = ["serde"] }
 faer = "0.22.6"
+glam = { version = "0.30.9", features = ["serde"] }
 itertools = "0.14.0"
 kiddo = "5.0.3"
 ndarray = "0.16.1"
+serde = "1.0.228"
 thiserror = "2.0.12"
 vtkio = "0.6.3"

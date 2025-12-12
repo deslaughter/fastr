@@ -1,4 +1,4 @@
-use crate::core::{Quaternion, Vector3};
+use crate::core::types::*;
 
 /// A node in a computational mesh representing a point in 3D space with kinematic and load information.
 ///
@@ -16,10 +16,11 @@ use crate::core::{Quaternion, Vector3};
 /// # Examples
 ///
 /// ```
-/// use crate::core::{Node, Vector3, Quaternion};
+/// use fastr::core::mesh::Node;
+/// use fastr::core::{Vector3, Quaternion};
 ///
 /// // Create a node at origin with identity orientation
-/// let mut node = Node::new(0, Vector3::zero(), Quaternion::identity());
+/// let mut node = Node::new(0, Vector3::ZERO, Quaternion::IDENTITY);
 ///
 /// // Move the node
 /// node.translate(Vector3::new(1.0, 0.0, 0.0));
@@ -27,7 +28,7 @@ use crate::core::{Quaternion, Vector3};
 /// // Get current position
 /// let current_pos = node.x();
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Node {
     /// Unique identifier for this node
     pub id: usize,
@@ -73,8 +74,9 @@ impl Node {
     ///
     /// ```
     /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
     ///
-    /// let node = Node::new(1, Vector3::new(1.0, 2.0, 3.0), Quaternion::identity());
+    /// let node = Node::new(1, Vector3::new(1.0, 2.0, 3.0), Quaternion::IDENTITY);
     /// assert_eq!(node.id, 1);
     /// assert_eq!(node.x(), Vector3::new(1.0, 2.0, 3.0));
     /// ```
@@ -82,15 +84,15 @@ impl Node {
         Self {
             id,
             x0,
-            ut: Vector3::zero(),
-            vt: Vector3::zero(),
-            at: Vector3::zero(),
+            ut: Vector3::ZERO,
+            vt: Vector3::ZERO,
+            at: Vector3::ZERO,
             r0,
-            ur: Quaternion::identity(),
-            vr: Vector3::zero(),
-            ar: Vector3::zero(),
-            f: Vector3::zero(),
-            m: Vector3::zero(),
+            ur: Quaternion::IDENTITY,
+            vr: Vector3::ZERO,
+            ar: Vector3::ZERO,
+            f: Vector3::ZERO,
+            m: Vector3::ZERO,
         }
     }
 
@@ -111,8 +113,9 @@ impl Node {
     ///
     /// ```
     /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
     ///
-    /// let mut node = Node::new(0, Vector3::zero(), Quaternion::identity());
+    /// let mut node = Node::new(0, Vector3::ZERO, Quaternion::IDENTITY);
     /// node.translate(Vector3::new(1.0, 0.0, 0.0))
     ///     .translate(Vector3::new(0.0, 1.0, 0.0));
     /// assert_eq!(node.ut, Vector3::new(1.0, 1.0, 0.0));
@@ -135,9 +138,11 @@ impl Node {
     ///
     /// ```
     /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
+    /// use std::f64::consts::FRAC_PI_2;
     ///
-    /// let mut node = Node::new(0, Vector3::zero(), Quaternion::identity());
-    /// let rotation = Quaternion::from_vector(Vector3::new(0.0, 0.0, PI/2));
+    /// let mut node = Node::new(0, Vector3::ZERO, Quaternion::IDENTITY);
+    /// let rotation = Quaternion::from_rotation_z(FRAC_PI_2);
     /// node.rotate(rotation);
     /// ```
     pub fn rotate(&mut self, dq: Quaternion) {
@@ -157,8 +162,9 @@ impl Node {
     ///
     /// ```
     /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
     ///
-    /// let mut node = Node::new(0, Vector3::new(1.0, 0.0, 0.0), Quaternion::identity());
+    /// let mut node = Node::new(0, Vector3::new(1.0, 0.0, 0.0), Quaternion::IDENTITY);
     /// node.translate(Vector3::new(0.5, 0.0, 0.0));
     /// assert_eq!(node.x(), Vector3::new(1.5, 0.0, 0.0));
     /// ```
@@ -178,9 +184,10 @@ impl Node {
     /// # Examples
     ///
     /// ```
-    /// use fastr::core::{Node, Vector3, Quaternion};
+    /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
     ///
-    /// let node = Node::new(0, Vector3::zero(), Quaternion::identity());
+    /// let node = Node::new(0, Vector3::ZERO, Quaternion::IDENTITY);
     /// let current_orientation = node.r();
     /// ```
     pub fn r(&self) -> Quaternion {
@@ -203,9 +210,10 @@ impl Node {
     /// # Examples
     ///
     /// ```
-    /// use fastr::core::{Node, Vector3, Quaternion};
+    /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
     ///
-    /// let mut node = Node::new(0, Vector3::new(1.0, 0.0, 0.0), Quaternion::identity());
+    /// let mut node = Node::new(0, Vector3::new(1.0, 0.0, 0.0), Quaternion::IDENTITY);
     /// node.set_x(Vector3::new(2.0, 1.0, 0.0));
     /// assert_eq!(node.ut, Vector3::new(1.0, 1.0, 0.0));
     /// ```
@@ -231,9 +239,11 @@ impl Node {
     ///
     /// ```
     /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
+    /// use std::f64::consts::PI;
     ///
-    /// let mut node = Node::new(0, Vector3::zero(), Quaternion::identity());
-    /// let target_rotation = Quaternion::from_vector(Vector3::new(0.0, 0.0, PI/4));
+    /// let mut node = Node::new(0, Vector3::ZERO, Quaternion::IDENTITY);
+    /// let target_rotation = Quaternion::from_rotation_z(PI/4.0);
     /// node.set_r(target_rotation);
     /// ```
     pub fn set_r(&mut self, q: Quaternion) -> &mut Node {
@@ -259,9 +269,10 @@ impl Node {
     ///
     /// ```
     /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
     ///
-    /// let source = Node::new(1, Vector3::new(1.0, 0.0, 0.0), Quaternion::identity());
-    /// let mut target = Node::new(2, Vector3::zero(), Quaternion::identity());
+    /// let source = Node::new(1, Vector3::new(1.0, 0.0, 0.0), Quaternion::IDENTITY);
+    /// let mut target = Node::new(2, Vector3::ZERO, Quaternion::IDENTITY);
     /// target.copy_motion_from(&source);
     /// assert_eq!(target.x0, source.x0);
     /// ```
@@ -294,9 +305,10 @@ impl Node {
     ///
     /// ```
     /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
     ///
-    /// let source = Node::new(1, Vector3::zero(), Quaternion::identity());
-    /// let mut target = Node::new(2, Vector3::zero(), Quaternion::identity());
+    /// let source = Node::new(1, Vector3::ZERO, Quaternion::IDENTITY);
+    /// let mut target = Node::new(2, Vector3::ZERO, Quaternion::IDENTITY);
     /// target.copy_loads_from(&source);
     /// assert_eq!(target.f, source.f);
     /// assert_eq!(target.m, source.m);
@@ -320,17 +332,18 @@ impl Node {
     /// # Examples
     ///
     /// ```
-    /// use fastr::core::{Node, Vector3, Quaternion};
+    /// use fastr::core::mesh::Node;
+    /// use fastr::core::{Vector3, Quaternion};
     ///
-    /// let mut node = Node::new(0, Vector3::zero(), Quaternion::identity());
+    /// let mut node = Node::new(0, Vector3::ZERO, Quaternion::IDENTITY);
     /// // ... apply some loads ...
     /// node.reset_loads();
-    /// assert_eq!(node.f, Vector3::zero());
-    /// assert_eq!(node.m, Vector3::zero());
+    /// assert_eq!(node.f, Vector3::ZERO);
+    /// assert_eq!(node.m, Vector3::ZERO);
     /// ```
     pub fn reset_loads(&mut self) -> &mut Self {
-        self.f = Vector3::zero();
-        self.m = Vector3::zero();
+        self.f = Vector3::ZERO;
+        self.m = Vector3::ZERO;
         self
     }
 }

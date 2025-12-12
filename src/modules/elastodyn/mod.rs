@@ -1,4 +1,5 @@
-use crate::core::{self, Quaternion, Vector3};
+use crate::core::types::*;
+use crate::core::Module;
 use crate::modules::output::Output;
 use crate::modules::{Input, ModuleId};
 
@@ -6,7 +7,7 @@ mod instance;
 use instance::Instance;
 pub use instance::{InitInput, InitOutput};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ElastoDyn {
     instances: Vec<Instance>,
 }
@@ -29,7 +30,7 @@ impl ElastoDyn {
     }
 }
 
-impl core::Module for ElastoDyn {
+impl Module for ElastoDyn {
     fn id() -> ModuleId {
         ModuleId::ElastoDyn
     }

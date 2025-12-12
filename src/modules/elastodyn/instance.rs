@@ -1,5 +1,8 @@
+use std::f64::consts::FRAC_PI_2;
 use std::f64::consts::PI;
 
+use glam::DQuat;
+use glam::DVec3;
 use itertools::Itertools;
 
 use crate::core;
@@ -10,7 +13,7 @@ use crate::modules::StateType;
 
 use super::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Instance {
     pub parameters: Parameters,
     pub input_times: Vec<f64>,
@@ -29,40 +32,40 @@ pub struct InitInput {
 }
 
 pub struct InitOutput {
-    module_vars: ModuleVars,
+    _module_vars: ModuleVars,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Parameters {
     n_blades: usize,
     u_mesh_ids: InputMeshIds,
     y_mesh_ids: OutputMeshIds,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputMeshIds {
     pub hub_load: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OutputMeshIds {
     pub hub_motion: usize,
     pub blade_root_motion: Vec<usize>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct State {
     // Hub translational displacement
-    pub hub_ut: Vector3,
+    pub hub_ut: DVec3,
 
     // Hub rotational displacement
-    pub hub_ur: Quaternion,
+    pub hub_ur: DQuat,
 
     // Hub translational velocity
-    pub hub_vt: Vector3,
+    pub hub_vt: DVec3,
 
     // Hub rotational velocity
-    pub hub_vr: Vector3,
+    pub hub_vr: DVec3,
 }
 
 impl Instance {
@@ -86,9 +89,9 @@ impl Instance {
                 let mut mb = core::mesh::Builder::new();
                 mb.add_node()
                     .set_position(init_input.hub_diameter / 2., 0., 0.)
-                    .set_orientation(Quaternion::identity())
-                    .rotate(Quaternion::from_vector(Vector3::new(0., -PI / 2., 0.)))
-                    .rotate(Quaternion::from_vector(Vector3::new(angle, 0., 0.)))
+                    .set_orientation(DQuat::IDENTITY)
+                    .rotate(DQuat::from_rotation_y(-FRAC_PI_2))
+                    .rotate(DQuat::from_rotation_x(angle))
                     .build();
                 mb.build()
             })
@@ -161,27 +164,27 @@ impl Instance {
         };
 
         // Create initialization output
-        let init_out = InitOutput { module_vars: mv };
+        let init_out = InitOutput { _module_vars: mv };
 
         (ins, Ok(init_out))
     }
 
-    pub fn output(&self) -> anyhow::Result<()> {
+    pub fn _output(&self) -> anyhow::Result<()> {
         // Output calculation logic for ElastoDyn
         Ok(())
     }
 
-    pub fn continuous_state_derivatives(&self) -> anyhow::Result<()> {
+    pub fn _continuous_state_derivatives(&self) -> anyhow::Result<()> {
         // Continuous state derivative calculation logic for ElastoDyn
         Ok(())
     }
 
-    pub fn jacobian_p_state(&self) -> anyhow::Result<()> {
+    pub fn _jacobian_p_state(&self) -> anyhow::Result<()> {
         // Jacobian with respect to state logic for ElastoDyn
         Ok(())
     }
 
-    pub fn jacobian_p_input(&self) -> anyhow::Result<()> {
+    pub fn _jacobian_p_input(&self) -> anyhow::Result<()> {
         // Jacobian with respect to input logic for ElastoDyn
         Ok(())
     }

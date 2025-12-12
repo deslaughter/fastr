@@ -1,11 +1,12 @@
 use crate::core::mesh::builder;
+use crate::core::types::*;
 
 use super::{Element, Mapping, Node};
 use bitflags::bitflags;
 use itertools::Itertools;
 use vtkio::model::*;
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Mesh {
     pub id: usize,
     pub fields: Fields,
@@ -16,7 +17,7 @@ pub struct Mesh {
 
 bitflags! {
     /// Represents which fields are active in a mesh.
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
     pub struct Fields: u32 {
         const Force = 1 << 0;
         const Moment = 1 << 1;
@@ -165,18 +166,18 @@ impl Mesh {
             ($field_name:ident, $node_field:ident) => {
                 if field.contains(Fields::$field_name) {
                     for node in &mut self.nodes {
-                        node.$node_field.copy_from_slice(&data[offset..offset + 3]);
+                        node.$node_field = Vector3::from_slice(&data[offset..offset + 3]);
                         offset += 3;
                     }
                 }
             };
         }
 
-        macro_rules! assign_quaternion {
+        macro_rules! assign_quat {
             ($field_name:ident, $node_field:ident) => {
                 if field.contains(Fields::$field_name) {
                     for node in &mut self.nodes {
-                        node.$node_field.copy_from_slice(&data[offset..offset + 4]);
+                        node.$node_field = Quaternion::from_slice(&data[offset..offset + 4]);
                         offset += 4;
                     }
                 }
@@ -184,7 +185,7 @@ impl Mesh {
         }
 
         assign_vec3!(TranslationalDisplacement, ut);
-        assign_quaternion!(AngularDisplacement, ur);
+        assign_quat!(AngularDisplacement, ur);
         assign_vec3!(TranslationalVelocity, vt);
         assign_vec3!(AngularVelocity, vr);
         assign_vec3!(TranslationalAcceleration, at);
@@ -198,7 +199,11 @@ impl Mesh {
         let n_nodes = self.nodes.len();
 
         // Convert node orientations to rotation matrices
-        let rotations = self.nodes.iter().map(|n| n.r().to_matrix()).collect_vec();
+        let rotations = self
+            .nodes
+            .iter()
+            .map(|n| Matrix3::from_quat(n.r()))
+            .collect_vec();
 
         // Macro to define orientation attributes
         macro_rules! build_orientation_attribute {
@@ -209,7 +214,7 @@ impl Mesh {
                     data: IOBuffer::F32(
                         rotations
                             .iter()
-                            .flat_map(|r| r.column($column).map(|v| v as f32))
+                            .flat_map(|m| m.col($column).as_vec3().to_array())
                             .collect_vec(),
                     ),
                 })

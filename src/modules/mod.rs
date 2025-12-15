@@ -14,11 +14,6 @@ pub use input::Input;
 pub mod output;
 pub use output::Output;
 
-pub enum StateIndex {
-    Current,
-    Previous,
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ModuleId {
     None,

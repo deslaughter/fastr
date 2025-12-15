@@ -57,16 +57,6 @@ impl Module for ElastoDyn {
         Ok(())
     }
 
-    fn jacobian_p_input(&self) -> anyhow::Result<()> {
-        // Jacobian with respect to input logic for ElastoDyn
-        Ok(())
-    }
-
-    fn jacobian_p_continuous_state(&self) -> anyhow::Result<()> {
-        // Jacobian with respect to continuous state logic for ElastoDyn
-        Ok(())
-    }
-
     fn get_operating_point(&self) -> anyhow::Result<()> {
         // Get operating point logic for ElastoDyn
         Ok(())
@@ -74,6 +64,16 @@ impl Module for ElastoDyn {
 
     fn set_operating_point(&self) -> anyhow::Result<()> {
         // Set operating point logic for ElastoDyn
+        Ok(())
+    }
+
+    fn calc_jacobian(
+        &self,
+        _input: crate::core::InputIndex,
+        _state: crate::core::StateIndex,
+        _jacobians: crate::core::Jacobian,
+    ) -> anyhow::Result<()> {
+        // Jacobian calculation logic for ElastoDyn
         Ok(())
     }
 }
